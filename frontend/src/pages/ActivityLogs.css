@@ -1,0 +1,39 @@
+.activity-logs-page {
+}
+
+.activity-logs-page .page-header {
+  margin-bottom: 1.5rem;
+}
+
+.activity-logs-page .page-title-icon {
+  color: var(--red);
+}
+
+.activity-logs-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  padding: 1rem;
+}
+
+.activity-logs-select,
+.activity-logs-input {
+  padding: 0.5rem 0.75rem;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--black);
+  font-size: 0.9rem;
+}
+
+.activity-logs-input {
+  min-width: 120px;
+}
+
+.activity-logs-page .table-empty {
+  color: var(--text-muted);
+  text-align: center;
+  padding: 2rem;
+}

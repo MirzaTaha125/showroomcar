@@ -1,0 +1,79 @@
+import mongoose from 'mongoose';
+
+const carAccountSchema = new mongoose.Schema(
+  {
+    showroom: { type: mongoose.Schema.Types.ObjectId, ref: 'Showroom', required: true },
+    vehicle: { type: mongoose.Schema.Types.ObjectId, ref: 'Vehicle', default: null },
+    transaction: { type: mongoose.Schema.Types.ObjectId, ref: 'Transaction', required: true },
+    receiptNumber: { type: String, trim: true },
+    // Inline vehicle details when vehicle was added in form (not from inventory)
+    registrationNo: { type: String, default: '', trim: true },
+    dateOfRegistration: { type: Date, default: null },
+    chassisNo: { type: String, default: '', trim: true },
+    engineNo: { type: String, default: '', trim: true },
+    make: { type: String, default: '', trim: true },
+    model: { type: String, default: '', trim: true },
+    color: { type: String, default: '', trim: true },
+    hp: { type: String, default: '', trim: true },
+    yearOfManufacturing: { type: String, default: '', trim: true },
+    deliveryTime: { type: String, default: '', trim: true },
+    registrationBookNoNew: { type: String, default: '', trim: true },
+    registrationBookNo: { type: String, default: '', trim: true },
+    salesCertificateBillOfEntryNo: { type: String, default: '', trim: true },
+    salesCertificateDate: { type: Date, default: null },
+    invoiceNo: { type: String, default: '', trim: true },
+    invoiceDate: { type: Date, default: null },
+    cplcVerification: { type: String, default: '', trim: true },
+    cplcDate: { type: Date, default: null },
+    cplcTime: { type: String, default: '', trim: true },
+    purchaserName: { type: String, trim: true },
+    purchaserCnic: { type: String, default: '', trim: true },
+    purchaserPhone: { type: String, default: '', trim: true },
+    purchaserAddress: { type: String, default: '', trim: true },
+    purchaserSalesmanName: { type: String, default: '', trim: true },
+    agentName: { type: String, default: '', trim: true },
+    agentCnic: { type: String, default: '', trim: true },
+    agentAddress: { type: String, default: '', trim: true },
+    agentPhone: { type: String, default: '', trim: true },
+    salesmanName: { type: String, default: '', trim: true },
+    ownerName: { type: String, default: '', trim: true },
+    ownerCnic: { type: String, default: '', trim: true },
+    ownerAddress: { type: String, default: '', trim: true },
+    ownerTelephone: { type: String, default: '', trim: true },
+    ownerThumbImpression: { type: String, default: '', trim: true },
+    paymentMethods: [
+      {
+        method: { type: String, enum: ['cash', 'online_banking', 'cheque', 'token'] },
+        amount: Number,
+        bankDetails: String,
+        chequeNo: String,
+        bankName: String,
+        accountTitle: String,
+        date: { type: Date, default: null }
+      },
+    ],
+    totalAmountReceived: { type: Number, default: 0 },
+    balance: { type: Number, default: 0 },
+    notes: { type: String, default: '', trim: true },
+    documentDetails: { type: [String], default: [] },
+    remarks: { type: String, default: '', trim: true },
+    titleStampSign: { type: String, default: '', trim: true },
+    sellerSignature: { type: String, default: '', trim: true },
+    purchaserSignature: { type: String, default: '', trim: true },
+    biometricContent: { type: String, default: '', trim: true },
+    biometricSigningDate: { type: Date, default: null },
+    biometricImagePath: { type: String, default: '', trim: true },
+    includeNadraBiometric: { type: Boolean, default: false },
+    sellerBiometricDate: { type: Date, default: null },
+    purchaserBiometricDate: { type: Date, default: null },
+    documentTitle: { type: String, trim: true },
+    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    forCarDealers: { type: Boolean, default: true },
+  },
+  { timestamps: true }
+);
+
+carAccountSchema.index({ showroom: 1, createdAt: -1 });
+carAccountSchema.index({ transaction: 1 }, { unique: true });
+
+export default mongoose.model('CarAccount', carAccountSchema);
