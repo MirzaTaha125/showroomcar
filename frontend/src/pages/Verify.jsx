@@ -5,7 +5,7 @@ import { format } from 'date-fns';
 import api from '../api/client';
 import './Verification.css';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
 export default function Verify() {
   const { id } = useParams();
@@ -60,11 +60,12 @@ export default function Verify() {
   // Fix logo path
   let logoUrl = null;
   if (showroom?.logoPath) {
-    if (showroom.logoPath.startsWith('/api')) {
-      const baseUrl = API_BASE_URL.replace('/api', '');
-      logoUrl = `${baseUrl}${showroom.logoPath}`;
+    if (showroom.logoPath.startsWith('http')) {
+      logoUrl = showroom.logoPath;
     } else {
-      logoUrl = `${API_BASE_URL}/uploads/logos/${showroom.logoPath}`;
+      const base = (api.defaults.baseURL || '').replace(/\/api$/, '');
+      const path = showroom.logoPath.startsWith('/') ? showroom.logoPath : `/${showroom.logoPath}`;
+      logoUrl = path.startsWith('/api') ? `${base}${path}` : `${base}/api${path}`;
     }
   }
 

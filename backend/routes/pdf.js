@@ -1,8 +1,10 @@
 import express from 'express';
 import { param, validationResult } from 'express-validator';
 import Transaction from '../models/Transaction.js';
+import TokenReceipt from '../models/TokenReceipt.js';
 import { protect, restrictToShowroom } from '../middleware/auth.js';
 import { generateReceiptTwoPagesPDF } from '../services/pdfService.js';
+import { generateTokenReceiptPDF } from '../services/tokenReceiptPdfService.js';
 import { logActivity } from '../utils/activityLog.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
@@ -133,6 +135,42 @@ router.get(
       entityId: transactionId,
       showroomId: showroomId || undefined,
       metadata: { type: 'internal', receiptNumber: transaction.receiptNumber },
+    }).catch(() => { });
+  })
+);
+
+router.get(
+  '/token-receipt/:id',
+  param('id').isMongoId(),
+  asyncHandler(async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+
+    const receipt = await TokenReceipt.findById(req.params.id)
+      .populate('showroom', 'name address phone logoPath')
+      .populate('addedBy', 'name email');
+
+    if (!receipt) return res.status(404).json({ message: 'Token receipt not found.' });
+
+    const showroomId = receipt.showroom?._id?.toString?.() || receipt.showroom?.toString?.();
+    if (req.user.role !== 'admin' && showroomId !== req.showroomId) {
+      return res.status(403).json({ message: 'Access denied.' });
+    }
+
+    const pdf = await generateTokenReceiptPDF(receipt);
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="token-receipt-${receipt._id}.pdf"`);
+    res.setHeader('Content-Length', pdf.length);
+    res.end(pdf, 'binary');
+
+    logActivity({
+      userId: req.user._id,
+      action: 'pdf_download',
+      entityType: 'tokenReceipt',
+      entityId: receipt._id,
+      showroomId: showroomId || undefined,
+      metadata: { type: 'token_receipt' },
     }).catch(() => { });
   })
 );

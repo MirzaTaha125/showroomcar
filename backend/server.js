@@ -29,6 +29,7 @@ import pdfRoutes from './routes/pdf.js';
 import verifyRoutes from './routes/verify.js';
 import statsRoutes from './routes/stats.js';
 import activityLogRoutes from './routes/activityLogs.js';
+import tokenReceiptRoutes from './routes/tokenReceipts.js';
 
 // Validate environment variables
 validateEnv();
@@ -40,6 +41,9 @@ process.on('unhandledRejection', (reason, promise) => {
 
 const app = express();
 
+// Trust proxy for rate limiting (needed when behind a proxy like Nginx or cloud load balancer)
+app.set('trust proxy', 1);
+
 // Security middleware
 app.use(helmet({
   contentSecurityPolicy: false, // Disable for API
@@ -47,18 +51,21 @@ app.use(helmet({
 }));
 
 // CORS - support multiple origins from env variable
-const allowedOrigins = process.env.FRONTEND_URL
+const baseAllowed = ['http://localhost:3000', 'http://localhost:5173']; // Common dev origins
+const envOrigins = process.env.FRONTEND_URL
   ? process.env.FRONTEND_URL.split(',').map(origin => origin.trim())
-  : ['http://localhost:3000'];
+  : [];
+const allowedOrigins = [...new Set([...baseAllowed, ...envOrigins])];
 
 app.use(cors({
   origin: (origin, callback) => {
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
 
-    if (allowedOrigins.includes(origin)) {
+    if (allowedOrigins.includes(origin) || allowedOrigins.some(o => origin.startsWith(o))) {
       callback(null, true);
     } else {
+      console.warn(`[CORS] Rejected origin: ${origin}`);
       callback(new Error('Not allowed by CORS'));
     }
   },
@@ -165,6 +172,7 @@ app.use('/api/verify', verifyRoutes);
 app.use('/api/verify-sale', verifyRoutes);
 app.use('/api/stats', requireDb, statsRoutes);
 app.use('/api/activity-logs', requireDb, activityLogRoutes);
+app.use('/api/token-receipts', requireDb, tokenReceiptRoutes);
 
 // 404 handler
 app.use((req, res) => res.status(404).json({ message: 'Endpoint not found' }));

@@ -8,7 +8,7 @@ import { ConfirmDialog } from '../components/ConfirmDialog';
 import '../components/ui.css';
 import './CarAccountList.css';
 
-const API_BASE = 'https://benito-musicianly-danuta.ngrok-free.dev/api';
+
 const CONTROLLER_EDIT_WINDOW_MS = 12 * 60 * 60 * 1000;
 
 /** Controllers can only edit/delete within 12 hours of creation. */
@@ -98,20 +98,10 @@ export default function CarAccountList({ type, basePath }) {
   };
 
   const fetchPdfBlob = async (transactionId, type) => {
-    const token = localStorage.getItem('token');
-    const res = await fetch(`${API_BASE}/pdf/${type}/${transactionId}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'ngrok-skip-browser-warning': 'true'
-      }
+    const res = await api.get(`/pdf/${type}/${transactionId}`, {
+      responseType: 'blob'
     });
-    if (!res.ok) {
-      const errBody = await res.text();
-      let msg = res.statusText;
-      try { if (errBody) msg = JSON.parse(errBody).message || msg; } catch (_) { }
-      throw new Error(msg || 'Failed to load PDF');
-    }
-    const blob = await res.blob();
+    const blob = res.data;
     if (!blob.type || !blob.type.includes('pdf')) {
       throw new Error('Server did not return a PDF. Please sign in again and try again.');
     }

@@ -14,6 +14,8 @@ import Vehicles from './pages/Vehicles';
 import Transactions from './pages/Transactions';
 import ActivityLogs from './pages/ActivityLogs';
 import Verify from './pages/Verify';
+import TokenReceipts from './pages/TokenReceipts';
+import TokenReceiptForm from './pages/TokenReceiptForm';
 
 function PrivateRoute({ children, adminOnly }) {
   const { user, loading } = useAuth();
@@ -41,9 +43,9 @@ function AppRoutes() {
         <Route path="delivery-orders/new" element={<CarAccount type="VEHICLE DELIVERY ORDER" basePath="/delivery-orders" />} />
         <Route path="delivery-orders/edit/:id" element={<CarAccount type="VEHICLE DELIVERY ORDER" basePath="/delivery-orders" />} />
 
-        <Route path="token-receipts" element={<CarAccountList type="VEHICLE TOKEN RECEIPT" basePath="/token-receipts" />} />
-        <Route path="token-receipts/new" element={<CarAccount type="VEHICLE TOKEN RECEIPT" basePath="/token-receipts" />} />
-        <Route path="token-receipts/edit/:id" element={<CarAccount type="VEHICLE TOKEN RECEIPT" basePath="/token-receipts" />} />
+        <Route path="token-receipts" element={<TokenReceipts />} />
+        <Route path="token-receipts/new" element={<TokenReceiptForm />} />
+        <Route path="token-receipts/edit/:id" element={<TokenReceiptForm />} />
 
         <Route path="purchase-orders" element={<CarAccountList type="VEHICLE PURCHASE ORDER" basePath="/purchase-orders" />} />
         <Route path="purchase-orders/new" element={<CarAccount type="VEHICLE PURCHASE ORDER" basePath="/purchase-orders" />} />

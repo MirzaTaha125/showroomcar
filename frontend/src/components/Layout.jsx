@@ -28,7 +28,7 @@ export default function Layout() {
             <FileText size={18} /> Delivery Orders
           </NavLink>
           <NavLink to="/token-receipts" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
-            <FileText size={18} /> Token Receipts
+            <FileText size={18} /> Token Receipt
           </NavLink>
           <NavLink to="/purchase-orders" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
             <FileText size={18} /> Purchase Orders

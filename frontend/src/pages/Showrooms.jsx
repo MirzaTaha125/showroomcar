@@ -9,7 +9,7 @@ import './Showrooms.css';
 const getLogoUrl = (logoPath) => {
   if (!logoPath) return null;
   if (logoPath.startsWith('http')) return logoPath;
-  const base = window.location.origin;
+  const base = (api.defaults.baseURL || '').replace(/\/api$/, '');
   return logoPath.startsWith('/') ? `${base}${logoPath}` : `${base}/api${logoPath.startsWith('/') ? '' : '/'}${logoPath}`;
 };
 
@@ -96,20 +96,10 @@ export default function Showrooms() {
       if (logoFile) {
         const formData = new FormData();
         formData.append('logo', logoFile);
-        const token = localStorage.getItem('token');
-        const base = window.location.origin;
-        const r = await fetch(`${base}/api/showrooms/upload-logo`, {
-          method: 'POST',
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-          body: formData,
+        const uploadRes = await api.post('/showrooms/upload-logo', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
         });
-        if (!r.ok) {
-          const err = await r.json().catch(() => ({}));
-          const msg = err.message || (r.status === 400 ? 'No file or invalid image. Use JPEG, PNG, GIF or WebP.' : 'Upload failed.');
-          throw new Error(msg);
-        }
-        const uploadRes = await r.json();
-        logoPath = uploadRes.logoPath || logoPath;
+        logoPath = uploadRes.data.logoPath || logoPath;
       }
       const payload = {
         name: (data.name || '').trim(),

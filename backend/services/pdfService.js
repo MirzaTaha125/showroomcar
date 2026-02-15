@@ -278,16 +278,16 @@ async function drawReceiptLayout(doc, transaction, qrImage, options = {}) {
     try {
       doc.image(logoImage, logoX, y, { width: logoWidth, height: logoHeight, fit: [logoWidth, logoHeight] });
     } catch (_) { }
-    y += logoHeight - 25;
+    y += logoHeight + 10;
   } else if (hasShowroom) {
     doc.fontSize(18).font('Helvetica-Bold').fillColor('black').text(showroomName || 'Showroom', left, y, { width: fullWidth, align: 'center' });
     doc.fontSize(8).font('Helvetica').fillColor(COLORS.textMuted).text(oneLine(showroomAddress, 70), left, y + 18, { width: fullWidth, align: 'center' });
     doc.fontSize(8).text(showroomPhone ? `Tel: ${showroomPhone}` : '', left, y + 30, { width: fullWidth, align: 'center' });
-    y += 20; // Reduced from 40
+    y += 50;
   } else {
     doc.fontSize(18).font('Helvetica-Bold').fillColor('black').text(showroomName || 'Showroom', left, y, { width: fullWidth, align: 'center' });
     doc.fontSize(8).font('Helvetica').fillColor(COLORS.textMuted).text(oneLine(showroomAddress, 70), left, y + 18, { width: fullWidth, align: 'center' });
-    y += 20; // Reduced from 32
+    y += 50;
   }
 
   // Receipt No & Date removed per user request
@@ -296,24 +296,26 @@ async function drawReceiptLayout(doc, transaction, qrImage, options = {}) {
 
   if (isCarMarkaz) {
     // Red full-width strip with white text
+    y = Math.max(y, 80);
     doc.save();
     doc.rect(0, y, pageWidth, 20).fill(COLORS.danger);
     doc.restore();
     doc.fillColor('white').fontSize(11).font('Helvetica-Bold')
       .text(transaction.documentTitle || 'VEHICLE DELIVERY ORDER', 0, y + 5, { align: 'center', width: pageWidth });
     doc.fillColor('black');
-    y += 25; // Reduced from 45
+    y += 30;
   } else {
     // --- 2. TITLE TEXT (above blue banner) ---
+    y = Math.max(y, 80);
     doc.fillColor('black').fontSize(11).font('Helvetica-Bold')
       .text(transaction.documentTitle || 'VEHICLE DELIVERY ORDER', left, y, { align: 'center', width: fullWidth });
-    y += 18;
+    y += 22;
 
     // --- 3. BLUE ASSOCIATION BANNER (Current style for other showrooms) ---
     doc.rect(left, y, fullWidth, 20).fill(COLORS.primary);
     doc.fillColor('white').fontSize(9.5).font('Helvetica-Bold')
       .text('The Automotive Traders and Importers Association Karachi', left, y + 5, { align: 'center', width: fullWidth });
-    y += 28; // Increased from 12 to 28 to prevent overlap with "Vehicle Information"
+    y += 25;
   }
 
   // --- 3. VEHICLE DATA SECTION (WITH UNDERLINES) ---
