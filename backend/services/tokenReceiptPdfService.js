@@ -158,6 +158,11 @@ async function drawTokenReceiptLayout(doc, receipt, options = {}) {
     drawField(doc, 'Received From:', receivedFrom, left, y, fullWidth, labelW, { underline: true });
     y += 25;
 
+    if (receipt.sellerFatherName) {
+        drawField(doc, 'For Seller:', `${receipt.sellerName} S/O ${receipt.sellerFatherName}`, left, y, fullWidth, labelW, { underline: true });
+        y += 25;
+    }
+
     drawField(doc, 'On Behalf Of Car Chassis no.:', receipt.onBehalfOfSellingCar, left, y, fullWidth, 150, { underline: true });
     y += 22;
 
@@ -195,7 +200,15 @@ async function drawTokenReceiptLayout(doc, receipt, options = {}) {
 
     const hP = drawPersonBox('Purchaser Details', receipt.purchaserName, receipt.purchaserCnic, receipt.purchaserMobile, left, y);
     const hS = drawPersonBox('Seller Details', receipt.sellerName, receipt.sellerCnic, receipt.sellerMobile, left + colWidth + 20, y);
-    y += Math.max(hP, hS) + 65;
+    y += Math.max(hP, hS) + 10;
+
+    if (receipt.sellerAddress) {
+        y = checkPageBreak(doc, y, 100);
+        const hAddr = drawField(doc, 'Seller Address:', receipt.sellerAddress, left, y, fullWidth, labelW, { underline: true });
+        y += hAddr + 10;
+    }
+
+    y += 55;
 
     y = checkPageBreak(doc, y, 100);
     const signWidth = (fullWidth - 80) / 3;

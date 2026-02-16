@@ -37,8 +37,10 @@ export default function TokenReceiptForm() {
             purchaserCnic: '',
             purchaserMobile: '',
             sellerName: '',
+            sellerFatherName: '',
             sellerCnic: '',
             sellerMobile: '',
+            sellerAddress: '',
             showroom: '',
         },
     });
@@ -154,7 +156,7 @@ export default function TokenReceiptForm() {
                             <input {...register('fromMrMrs', { required: 'Required' })} placeholder="MR. / MRS." />
                         </div>
                         <div className="form-group">
-                            <label>S/O, W/O, D/O</label>
+                            <label>S/O</label>
                             <input {...register('fatherName')} />
                         </div>
                     </div>
@@ -199,11 +201,13 @@ export default function TokenReceiptForm() {
                     <section className="car-account-section car-account-dealers-col">
                         <h2>Seller Details</h2>
                         <div className="form-group"><label>Seller Name *</label><input {...register('sellerName', { required: 'Required' })} /></div>
+                        <div className="form-group"><label>S/O</label><input {...register('sellerFatherName')} /></div>
                         <div className="form-group">
                             <label>Seller CNIC</label>
                             <input {...register('sellerCnic', { onChange: (e) => e.target.value = formatCnic(e.target.value) })} maxLength={15} placeholder="12345-1234567-1" />
                         </div>
                         <div className="form-group"><label>Seller Mobile</label><input {...register('sellerMobile')} /></div>
+                        <div className="form-group"><label>Seller Address</label><input {...register('sellerAddress')} /></div>
                     </section>
                 </div>
 

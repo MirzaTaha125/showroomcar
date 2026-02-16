@@ -83,6 +83,7 @@ router.post(
     body('purchaserCnic').optional().trim(),
     body('purchaserPhone').optional().trim(),
     body('purchaserAddress').optional().trim(),
+    body('purchaserFatherName').optional().trim(),
     body('ownerPhone').optional().trim(),
     body('agentName').optional().trim(),
     body('agentCnic').optional().trim(),
@@ -120,8 +121,13 @@ router.post(
     body('cplcVerification').optional().trim(),
     body('cplcDate').optional({ checkFalsy: true }).isISO8601(),
     body('cplcTime').optional().trim(),
-    body('documentTitle').optional().trim(),
     body('documentDetails').optional().isArray(),
+    body('ownerFatherName').optional().trim(),
+    body('sellerName').optional().trim(),
+    body('sellerFatherName').optional().trim(),
+    body('sellerCnic').optional().trim(),
+    body('sellerAddress').optional().trim(),
+    body('sellerPhone').optional().trim(),
   ],
   asyncHandler(async (req, res) => {
     const errors = validationResult(req);
@@ -235,6 +241,7 @@ router.post(
         cplcDate: req.body.cplcDate || null,
         cplcTime: req.body.cplcTime || '',
         purchaserName,
+        purchaserFatherName: req.body.purchaserFatherName || '',
         purchaserCnic: req.body.purchaserCnic || '',
         purchaserPhone: req.body.purchaserPhone || '',
         purchaserAddress: req.body.purchaserAddress || '',
@@ -245,9 +252,15 @@ router.post(
         agentAddress: req.body.agentAddress || '',
         agentPhone: req.body.agentPhone || '',
         ownerName: req.body.ownerName || '',
+        ownerFatherName: req.body.ownerFatherName || '',
         ownerCnic: req.body.ownerCnic || '',
         ownerAddress: req.body.ownerAddress || '',
         ownerTelephone: req.body.ownerTelephone || '',
+        sellerName: req.body.sellerName || '',
+        sellerFatherName: req.body.sellerFatherName || '',
+        sellerCnic: req.body.sellerCnic || '',
+        sellerAddress: req.body.sellerAddress || '',
+        sellerPhone: req.body.sellerPhone || '',
         ownerThumbImpression: req.body.ownerThumbImpression || '',
         paymentMethods,
         notes: req.body.notes || '',
@@ -346,6 +359,7 @@ router.put(
     body('purchaserCnic').optional().trim(),
     body('purchaserPhone').optional().trim(),
     body('purchaserAddress').optional().trim(),
+    body('purchaserFatherName').optional().trim(),
     body('purchaserSalesmanName').optional().trim(),
     body('ownerName').optional().trim(),
     body('ownerCnic').optional().trim(),
@@ -376,6 +390,7 @@ router.put(
     body('remarks').optional().trim(),
     body('paymentMethods').optional().isArray(),
     body('documentDetails').optional().isArray(),
+    body('ownerFatherName').optional().trim(),
   ],
   asyncHandler(async (req, res) => {
     const errors = validationResult(req);
@@ -388,6 +403,7 @@ router.put(
     try {
       const allowed = [
         'purchaserName', 'purchaserCnic', 'purchaserPhone', 'purchaserAddress',
+        'purchaserFatherName',
         'purchaserSalesmanName',
         'notes', 'remarks', 'ownerName',
         'ownerCnic', 'ownerAddress', 'ownerTelephone', 'ownerThumbImpression',
@@ -401,6 +417,8 @@ router.put(
         'documentTitle',
         'documentDetails',
         'sellerBiometricDate', 'purchaserBiometricDate',
+        'ownerFatherName',
+        'sellerName', 'sellerFatherName', 'sellerCnic', 'sellerAddress', 'sellerPhone',
       ];
       allowed.forEach((key) => {
         if (req.body[key] !== undefined) carAccount[key] = req.body[key];

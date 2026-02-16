@@ -23,8 +23,10 @@ const tokenReceiptSchema = new mongoose.Schema(
 
         // Seller Details
         sellerName: { type: String, required: true, trim: true },
+        sellerFatherName: { type: String, trim: true },
         sellerCnic: { type: String, trim: true },
         sellerMobile: { type: String, trim: true },
+        sellerAddress: { type: String, trim: true },
 
         addedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     },

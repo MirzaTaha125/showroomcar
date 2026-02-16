@@ -237,7 +237,7 @@ async function drawReceiptLayout(doc, transaction, qrImage, options = {}) {
   if (watermark) drawWatermark(doc, watermark);
   doc.opacity(1).fillColor('black');
 
-  let y = 20;
+  let y = 5; // Aggressively reduced from 10
   const left = 40;
   const pageWidth = doc.page.width;
   const pageHeight = doc.page.height;
@@ -278,7 +278,7 @@ async function drawReceiptLayout(doc, transaction, qrImage, options = {}) {
     try {
       doc.image(logoImage, logoX, y, { width: logoWidth, height: logoHeight, fit: [logoWidth, logoHeight] });
     } catch (_) { }
-    y += logoHeight + 10;
+    y += logoHeight + 0; // Removed gap completely
   } else if (hasShowroom) {
     doc.fontSize(18).font('Helvetica-Bold').fillColor('black').text(showroomName || 'Showroom', left, y, { width: fullWidth, align: 'center' });
     doc.fontSize(8).font('Helvetica').fillColor(COLORS.textMuted).text(oneLine(showroomAddress, 70), left, y + 18, { width: fullWidth, align: 'center' });
@@ -376,7 +376,23 @@ async function drawReceiptLayout(doc, transaction, qrImage, options = {}) {
 
   const hV10 = drawField('Year of Manufacturing:', v.yearOfManufacturing || '', left, y, 260, 120, { valueBold: true });
   const hV11 = drawField('Engine Capacity:', v.hp, left + 275, y, 230, 100);
-  y += Math.max(hV10, hV11) + 5;
+  y += Math.max(hV10, hV11) + 8;
+
+  // --- 3a. OWNER DETAILS (Newly added for visibility in Vehicle section) ---
+  const ownerName = transaction.ownerName || s.name || s.ownerName;
+  const ownerCnicVal = transaction.ownerCnic || s.cnic || s.nic;
+  const ownerAddressVal = transaction.ownerAddress || s.address;
+  const ownerPhoneVal = transaction.ownerTelephone || s.phone;
+
+  // Row 1: Name + CNIC
+  const hCombined = drawField('Owner Name:', `${ownerName}${transaction.ownerFatherName ? ` S/O ${transaction.ownerFatherName}` : ''}`, left, y, 250, labelW, { underline: true });
+  const hO3 = drawField('Owner CNIC:', formatCnic(ownerCnicVal), left + 265, y, 250, 80, { underline: true });
+  y += Math.max(hCombined, hO3) + 4;
+
+  // Row 2: Address + Phone
+  const hO5 = drawField('Owner Address:', ownerAddressVal, left, y, 250, labelW, { underline: true });
+  const hO4 = drawField('Owner Phone:', ownerPhoneVal, left + 265, y, 250, 80, { underline: true });
+  y += Math.max(hO5, hO4) + 4;
 
   const docDetailsStr = (transaction.documentDetails || []).join(', ');
   if (docDetailsStr) {
@@ -428,6 +444,12 @@ async function drawReceiptLayout(doc, transaction, qrImage, options = {}) {
     const hR5L = drawDealerRow('CNIC:', formatCnic(ownerCnicVal), left, y, { underline: true });
     const hR5R = drawDealerRow('CNIC:', formatCnic(transaction.purchaserCnic), rightColX, y, { underline: true });
     y += Math.max(hR5L, hR5R) + 4;
+    // Row 6.5: Father Name (left and right)
+    if (transaction.ownerFatherName || transaction.purchaserFatherName) {
+      const hR6L = transaction.ownerFatherName ? drawDealerRow('S/O:', transaction.ownerFatherName, left, y, { underline: true }) : 0;
+      const hR6R = transaction.purchaserFatherName ? drawDealerRow('S/O:', transaction.purchaserFatherName, rightColX, y, { underline: true }) : 0;
+      y += Math.max(hR6L, hR6R) + 4;
+    }
     // Row 7: Nadra Bio Date (only if values exist)
     if (transaction.sellerBiometricDate || transaction.purchaserBiometricDate) {
       const hB1 = drawDealerRow('Nadra Bio Date:', transaction.sellerBiometricDate ? fmt(transaction.sellerBiometricDate) : '_________________', left, y, { underline: true });
@@ -477,13 +499,11 @@ async function drawReceiptLayout(doc, transaction, qrImage, options = {}) {
       doc.fontSize(10); // Standard label size for signatures
       const lW = 85;
       const blockWidth = 265;
-      if (mode === 'showroom') {
-        const hS2 = drawField('Name:', data.salesman, x, currentY, blockWidth, lW);
-        currentY += hS2 + 5;
-      } else {
-        const hP1 = drawField('Name:', data.name, x, currentY, blockWidth, lW);
-        currentY += hP1 + 5;
-      }
+      // Prioritize manually entered name (data.name) over salesman/agent name (data.salesman)
+      // unless it's strictly a showroom-only signature where no name was entered.
+      const combinedName = (mode === 'showroom' && !data.name) ? data.salesman : (data.name || data.salesman);
+      const hN = drawField('Name:', `${combinedName}${data.fatherName ? ` S/O ${data.fatherName}` : ''}`, x, currentY, blockWidth, lW);
+      currentY += hN + 5;
       const hA = drawField('Address:', data.address, x, currentY, blockWidth, lW);
       currentY += hA + 5;
       const hT = drawField('Tel:', data.tel, x, currentY, blockWidth, lW);
@@ -501,16 +521,18 @@ async function drawReceiptLayout(doc, transaction, qrImage, options = {}) {
 
     const hSeller = drawSignInfo(left, y, {
       salesman: transaction.salesmanName || createdBy.name,
-      name: transaction.ownerName || s.ownerName || s.name,
-      address: transaction.ownerAddress || s.address,
-      tel: transaction.ownerTelephone || s.phone,
-      nic: transaction.ownerCnic || s.nic || s.cnic,
+      name: transaction.sellerName || transaction.ownerName || s.ownerName || s.name,
+      fatherName: transaction.sellerFatherName || transaction.ownerFatherName || '',
+      address: transaction.sellerAddress || transaction.ownerAddress || s.address,
+      tel: transaction.sellerPhone || transaction.ownerTelephone || s.phone,
+      nic: transaction.sellerCnic || transaction.ownerCnic || s.nic || s.cnic,
       nadraDate: transaction.sellerBiometricDate
     }, isPurchase ? 'person' : 'showroom');
 
     const hPurchaser = drawSignInfo(left + 285, y, {
       salesman: transaction.purchaserSalesmanName || '',
       name: transaction.purchaserName,
+      fatherName: transaction.purchaserFatherName || '',
       address: transaction.purchaserAddress,
       tel: transaction.purchaserPhone,
       nic: transaction.purchaserCnic,
@@ -605,9 +627,9 @@ async function drawReceiptLayout(doc, transaction, qrImage, options = {}) {
 
   // --- 7a. FOR OFFICE USE ONLY ---
   y = checkPageBreak(doc, y, 100);
-  y += 15; // Increased gap for section separation
+  y += 3; // Reduced from 5
   y += drawSectionHeader(doc, 'FOR OFFICE USE ONLY', left, y, fullWidth);
-  y += 5;
+  y += 3;
 
   const agentDetailsY = y;
   const agentLabelW = 85;
@@ -643,9 +665,9 @@ async function drawReceiptLayout(doc, transaction, qrImage, options = {}) {
 
   if (isDO || isPO) {
     y = checkPageBreak(doc, y, 120);
-    y += 12; // Increased gap for section separation
+    y += 3; // Reduced from 5
     y += drawSectionHeader(doc, 'Undertaking', left, y, fullWidth);
-    y += 5;
+    y += 3;
 
     let undertakingText = '';
     let signLabel = '';
@@ -674,9 +696,9 @@ From today onward, the showroom will have full rights over the vehicle as purcha
 
   // --- 8. REMARKS ---
   y = checkPageBreak(doc, y, 90);
-  y += 12; // Increased gap for section separation
+  y += 3; // Reduced from 5
   y += drawSectionHeader(doc, 'Remarks', left, y, fullWidth);
-  y += 5;
+  y += 3;
   doc.font('Helvetica').fontSize(8).fillColor(COLORS.text).text(transaction.remarks || 'No additional remarks.', left + 5, y, { width: fullWidth - 10 });
   y += 40;
   doc.fillColor('black');

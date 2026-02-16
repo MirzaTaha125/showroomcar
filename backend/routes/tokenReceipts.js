@@ -73,8 +73,10 @@ const receiptFields = [
     body('purchaserCnic').optional().trim(),
     body('purchaserMobile').optional().trim(),
     body('sellerName').trim().notEmpty().withMessage('Seller name is required'),
+    body('sellerFatherName').optional().trim(),
     body('sellerCnic').optional().trim(),
     body('sellerMobile').optional().trim(),
+    body('sellerAddress').optional().trim(),
     body('showroom').optional().isMongoId(),
 ];
 

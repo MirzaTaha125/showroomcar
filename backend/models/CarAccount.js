@@ -27,6 +27,7 @@ const carAccountSchema = new mongoose.Schema(
     cplcDate: { type: Date, default: null },
     cplcTime: { type: String, default: '', trim: true },
     purchaserName: { type: String, trim: true },
+    purchaserFatherName: { type: String, default: '', trim: true },
     purchaserCnic: { type: String, default: '', trim: true },
     purchaserPhone: { type: String, default: '', trim: true },
     purchaserAddress: { type: String, default: '', trim: true },
@@ -37,10 +38,16 @@ const carAccountSchema = new mongoose.Schema(
     agentPhone: { type: String, default: '', trim: true },
     salesmanName: { type: String, default: '', trim: true },
     ownerName: { type: String, default: '', trim: true },
+    ownerFatherName: { type: String, default: '', trim: true },
     ownerCnic: { type: String, default: '', trim: true },
-    ownerAddress: { type: String, default: '', trim: true },
     ownerTelephone: { type: String, default: '', trim: true },
     ownerThumbImpression: { type: String, default: '', trim: true },
+    // Seller details (distinct from owner)
+    sellerName: { type: String, default: '', trim: true },
+    sellerFatherName: { type: String, default: '', trim: true },
+    sellerCnic: { type: String, default: '', trim: true },
+    sellerAddress: { type: String, default: '', trim: true },
+    sellerPhone: { type: String, default: '', trim: true },
     paymentMethods: [
       {
         method: { type: String, enum: ['cash', 'online_banking', 'cheque', 'token'] },

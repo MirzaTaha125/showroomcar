@@ -47,8 +47,11 @@ export default function CarAccount({ type, basePath }) {
       hp: '',
       yearOfManufacturing: '',
       deliveryTime: '',
+      purchaserName: '',
+      purchaserFatherName: '',
       purchaserCnic: '',
       purchaserPhone: '',
+      purchaserAddress: '',
       purchaserSalesmanName: '',
       titleStampSign: '',
       sellerSignature: '',
@@ -61,6 +64,16 @@ export default function CarAccount({ type, basePath }) {
       commission: '',
       remarks: '',
       notes: '',
+      ownerName: '',
+      ownerFatherName: '',
+      ownerAddress: '',
+      ownerCnic: '',
+      ownerTelephone: '',
+      sellerName: '',
+      sellerFatherName: '',
+      sellerCnic: '',
+      sellerAddress: '',
+      sellerPhone: '',
       biometricContent: '',
       biometricSigningDate: '',
       transactionDate: '',
@@ -143,12 +156,19 @@ export default function CarAccount({ type, basePath }) {
         setValue('yearOfManufacturing', v.yearOfManufacturing || '');
         setValue('deliveryTime', t.deliveryTime || '');
         setValue('ownerName', t.ownerName || '');
+        setValue('ownerFatherName', t.ownerFatherName || '');
         setValue('ownerCnic', t.ownerCnic || '');
-        setValue('thumbImpression', t.ownerThumbImpression || '');
+        setValue('thumbImpression', t.ownerThumbImpression || t.thumbImpression || '');
         setValue('ownerAddress', t.ownerAddress || '');
         setValue('ownerTelephone', t.ownerTelephone || '');
+        setValue('sellerName', t.sellerName || '');
+        setValue('sellerFatherName', t.sellerFatherName || '');
+        setValue('sellerCnic', t.sellerCnic || '');
+        setValue('sellerAddress', t.sellerAddress || '');
+        setValue('sellerPhone', t.sellerPhone || '');
         setValue('salesmanName', t.salesmanName || '');
         setValue('purchaserName', t.purchaserName || '');
+        setValue('purchaserFatherName', t.purchaserFatherName || '');
         setValue('purchaserAddress', t.purchaserAddress || '');
         setValue('purchaserCnic', t.purchaserCnic || '');
         setValue('purchaserPhone', t.purchaserPhone || '');
@@ -280,15 +300,22 @@ export default function CarAccount({ type, basePath }) {
         const updatePayload = {
           documentTitle: data.documentTitle,
           purchaserName: data.purchaserName,
+          purchaserFatherName: data.purchaserFatherName || '',
           purchaserCnic: data.purchaserCnic || '',
           purchaserPhone: data.purchaserPhone || '',
           purchaserAddress: data.purchaserAddress || '',
           purchaserSalesmanName: data.purchaserSalesmanName || '',
           ownerName: data.ownerName || '',
+          ownerFatherName: data.ownerFatherName || '',
           ownerCnic: data.ownerCnic || '',
           ownerAddress: data.ownerAddress || '',
           ownerTelephone: data.ownerTelephone || '',
           ownerThumbImpression: data.thumbImpression || '',
+          sellerName: data.sellerName || '',
+          sellerFatherName: data.sellerFatherName || '',
+          sellerCnic: data.sellerCnic || '',
+          sellerAddress: data.sellerAddress || '',
+          sellerPhone: data.sellerPhone || '',
           salesmanName: data.salesmanName || '',
           agentName: data.agentName || '',
           agentCnic: data.agentCnic || '',
@@ -418,6 +445,7 @@ export default function CarAccount({ type, basePath }) {
         documentTitle: data.documentTitle,
         type: 'sale',
         purchaserName: data.purchaserName,
+        purchaserFatherName: data.purchaserFatherName || '',
         purchaserCnic: data.purchaserCnic || '',
         purchaserPhone: data.purchaserPhone || '',
         purchaserAddress: data.purchaserAddress || '',
@@ -427,10 +455,16 @@ export default function CarAccount({ type, basePath }) {
         sellerBiometricDate: data.sellerBiometricDate || null,
         purchaserBiometricDate: data.purchaserBiometricDate || null,
         ownerName: data.ownerName || '',
+        ownerFatherName: data.ownerFatherName || '',
         ownerCnic: data.ownerCnic || '',
         ownerAddress: data.ownerAddress || '',
         ownerTelephone: data.ownerTelephone || '',
         ownerThumbImpression: data.thumbImpression || '',
+        sellerName: data.sellerName || '',
+        sellerFatherName: data.sellerFatherName || '',
+        sellerCnic: data.sellerCnic || '',
+        sellerAddress: data.sellerAddress || '',
+        sellerPhone: data.sellerPhone || '',
         salesmanName: data.salesmanName || '',
         agentName: data.agentName || '',
         agentCnic: data.agentCnic || '',
@@ -625,6 +659,47 @@ export default function CarAccount({ type, basePath }) {
                 <div className="form-group"><label>Color</label><input {...register('color')} /></div>
                 <div className="form-group"><label>Engine Capacity</label><input {...register('hp')} /></div>
               </div>
+
+              <h3 style={{ marginTop: '1.5rem', marginBottom: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>Owner Details</h3>
+              <div className="form-row form-row-2">
+                <div className="form-group"><label>Owner Name *</label><input {...register('ownerName', { required: addVehicleInForm && 'Required' })} placeholder="Owner Name" /></div>
+                <div className="form-group"><label>S/O</label><input {...register('ownerFatherName')} placeholder="Father's Name" /></div>
+                <div className="form-group">
+                  <label>Owner CNIC</label>
+                  <input
+                    {...register('ownerCnic', {
+                      pattern: {
+                        value: /^\d{5}-\d{7}-\d{1}$/,
+                        message: 'Format: 12345-1234567-1'
+                      },
+                      onChange: (e) => {
+                        e.target.value = formatCnic(e.target.value);
+                      }
+                    })}
+                    placeholder="12345-1234567-1"
+                    maxLength={15}
+                  />
+                  {errors.ownerCnic && <span className="form-error">{errors.ownerCnic.message}</span>}
+                </div>
+                <div className="form-group">
+                  <label>Owner Phone</label>
+                  <input
+                    {...register('ownerTelephone', {
+                      pattern: {
+                        value: /^\d{4}-\d{7}$/,
+                        message: 'Format: 0300-1234567'
+                      },
+                      onChange: (e) => {
+                        e.target.value = formatPhone(e.target.value);
+                      }
+                    })}
+                    placeholder="0300-1234567"
+                    maxLength={12}
+                  />
+                  {errors.ownerTelephone && <span className="form-error">{errors.ownerTelephone.message}</span>}
+                </div>
+                <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Owner Address</label><input {...register('ownerAddress')} placeholder="Address" /></div>
+              </div>
               {(errors.chassisNo || errors.engineNo || errors.make || errors.model) && (
                 <span className="form-error">Chassis No, Engine No, Make and Model are required.</span>
               )}
@@ -727,26 +802,31 @@ export default function CarAccount({ type, basePath }) {
             <p className="car-account-dealers-desc">Owner / Dealer (left) and Purchaser (right). Stamp / Sign lines are not in the form — shown as empty space for signature on the PDF.</p>
             <div className="car-account-dealers-grid">
               <div className="car-account-dealers-col">
-                <div className="form-group"><label>Name</label><input {...register('salesmanName')} placeholder="Name" /></div>
-                <div className="form-group"><label>Address</label><input {...register('ownerAddress')} placeholder="Address" /></div>
-                <div className="form-group"><label>Phone</label><input {...register('ownerTelephone')} placeholder="Phone" /></div>
+                <div className="form-group"><label>Seller Name *</label><input {...register('sellerName')} placeholder="Seller Name" /></div>
+                <div className="form-group"><label>S/O</label><input {...register('sellerFatherName')} placeholder="Father's Name" /></div>
                 <div className="form-group">
-                  <label>CNIC</label>
+                  <label>Seller CNIC</label>
                   <input
-                    {...register('ownerCnic', {
-                      pattern: {
-                        value: /^\d{5}-\d{7}-\d{1}$/,
-                        message: 'Format: 12345-1234567-1'
-                      },
-                      onChange: (e) => {
-                        e.target.value = formatCnic(e.target.value);
-                      }
+                    {...register('sellerCnic', {
+                      pattern: { value: /^\d{5}-\d{7}-\d{1}$/, message: 'Format: 12345-1234567-1' },
+                      onChange: (e) => e.target.value = formatCnic(e.target.value)
                     })}
                     placeholder="12345-1234567-1"
                     maxLength={15}
                   />
-                  {errors.ownerCnic && <span className="form-error">{errors.ownerCnic.message}</span>}
                 </div>
+                <div className="form-group">
+                  <label>Seller Phone</label>
+                  <input
+                    {...register('sellerPhone', {
+                      pattern: { value: /^\d{4}-\d{7}$/, message: 'Format: 0300-1234567' },
+                      onChange: (e) => e.target.value = formatPhone(e.target.value)
+                    })}
+                    placeholder="0300-1234567"
+                    maxLength={12}
+                  />
+                </div>
+                <div className="form-group"><label>Seller Address</label><input {...register('sellerAddress')} placeholder="Address" /></div>
                 <div className="form-group">
                   <label>Seller Nadra Biometric Date</label>
                   <input type="date" {...register('sellerBiometricDate')} />
@@ -755,9 +835,8 @@ export default function CarAccount({ type, basePath }) {
                 <input type="hidden" {...register('titleStampSign')} />
               </div>
               <div className="car-account-dealers-col">
-                <div className="form-group"><label>Name</label><input {...register('purchaserSalesmanName')} placeholder="Name" /></div>
-                {/* Purchaser Name is hidden in Dealer mode, we can default it or let user fill it in standard mode if switched */}
-                <input type="hidden" {...register('purchaserName', { required: false })} />
+                <div className="form-group"><label>Name *</label><input {...register('purchaserName')} placeholder="Name" /></div>
+                <div className="form-group"><label>S/O</label><input {...register('purchaserFatherName')} placeholder="Father's Name" /></div>
                 <div className="form-group"><label>Phone</label><input {...register('purchaserPhone')} placeholder="Phone" /></div>
                 <div className="form-group"><label>Address</label><input {...register('purchaserAddress')} placeholder="Address" /></div>
                 <div className="form-group">
@@ -789,51 +868,36 @@ export default function CarAccount({ type, basePath }) {
 
         {!forCarDealers && (
           <section className="car-account-section">
-            <h2>Seller details</h2>
-            <p className="car-account-dealers-desc">Fill in the seller/owner details below. They appear on the PDF.</p>
+            <h2>Seller Details</h2>
+            <p className="car-account-dealers-desc">Enter details of the person selling the vehicle (if different from Owner).</p>
             <div className="form-row form-row-2">
-              {type !== 'VEHICLE PURCHASE ORDER' ? (
-                <>
-                  <div className="form-group"><label>Name</label><input {...register('salesmanName')} placeholder="Name" /></div>
-                </>
-              ) : (
-                <div className="form-group"><label>Name</label><input {...register('ownerName')} placeholder="Seller name" /></div>
-              )}
-              <div className="form-group"><label>Address</label><input {...register('ownerAddress')} placeholder="Address" /></div>
+              <div className="form-group"><label>Seller Name *</label><input {...register('sellerName')} placeholder="Seller Name" /></div>
+              <div className="form-group"><label>S/O</label><input {...register('sellerFatherName')} placeholder="Father's Name" /></div>
               <div className="form-group">
-                <label>Phone</label>
+                <label>Seller CNIC</label>
                 <input
-                  {...register('ownerTelephone', {
-                    pattern: {
-                      value: /^\d{4}-\d{7}$/,
-                      message: 'Format: 0300-1234567'
-                    },
-                    onChange: (e) => {
-                      e.target.value = formatPhone(e.target.value);
-                    }
-                  })}
-                  placeholder="0300-1234567"
-                  maxLength={12}
-                />
-                {errors.ownerTelephone && <span className="form-error">{errors.ownerTelephone.message}</span>}
-              </div>
-              <div className="form-group">
-                <label>CNIC</label>
-                <input
-                  {...register('ownerCnic', {
-                    pattern: {
-                      value: /^\d{5}-\d{7}-\d{1}$/,
-                      message: 'Format: 12345-1234567-1'
-                    },
-                    onChange: (e) => {
-                      e.target.value = formatCnic(e.target.value);
-                    }
+                  {...register('sellerCnic', {
+                    pattern: { value: /^\d{5}-\d{7}-\d{1}$/, message: 'Format: 12345-1234567-1' },
+                    onChange: (e) => e.target.value = formatCnic(e.target.value)
                   })}
                   placeholder="12345-1234567-1"
                   maxLength={15}
                 />
-                {errors.ownerCnic && <span className="form-error">{errors.ownerCnic.message}</span>}
+                {errors.sellerCnic && <span className="form-error">{errors.sellerCnic.message}</span>}
               </div>
+              <div className="form-group">
+                <label>Seller Phone</label>
+                <input
+                  {...register('sellerPhone', {
+                    pattern: { value: /^\d{4}-\d{7}$/, message: 'Format: 0300-1234567' },
+                    onChange: (e) => e.target.value = formatPhone(e.target.value)
+                  })}
+                  placeholder="0300-1234567"
+                  maxLength={12}
+                />
+                {errors.sellerPhone && <span className="form-error">{errors.sellerPhone.message}</span>}
+              </div>
+              <div className="form-group" style={{ gridColumn: 'span 2' }}><label>Seller Address</label><input {...register('sellerAddress')} placeholder="Address" /></div>
               <div className="form-group">
                 <label>Seller Nadra Biometric Date</label>
                 <input type="date" {...register('sellerBiometricDate')} />
@@ -853,10 +917,16 @@ export default function CarAccount({ type, basePath }) {
                 <div className="form-group"><label>Name</label><input {...register('purchaserSalesmanName')} placeholder="Name" /></div>
               </div>
             ) : (
-              <div className="form-group">
-                <label>Name *</label>
-                <input {...register('purchaserName', { required: type !== 'VEHICLE PURCHASE ORDER' && 'Purchaser name is required' })} placeholder="Purchaser name" />
-                {errors.purchaserName && <span className="form-error">{errors.purchaserName.message}</span>}
+              <div className="form-row form-row-2">
+                <div className="form-group">
+                  <label>Name *</label>
+                  <input {...register('purchaserName', { required: type !== 'VEHICLE PURCHASE ORDER' && 'Purchaser name is required' })} placeholder="Purchaser name" />
+                  {errors.purchaserName && <span className="form-error">{errors.purchaserName.message}</span>}
+                </div>
+                <div className="form-group">
+                  <label>S/O, W/O, D/O</label>
+                  <input {...register('purchaserFatherName')} placeholder="Father's Name" />
+                </div>
               </div>
             )}
             <div className="form-row form-row-2">
@@ -977,6 +1047,6 @@ export default function CarAccount({ type, basePath }) {
           </button>
         </div>
       </form>
-    </div>
+    </div >
   );
 }

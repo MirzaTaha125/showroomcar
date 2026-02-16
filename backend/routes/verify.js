@@ -19,19 +19,23 @@ async function getVerification(req, res) {
     let vehicle = null;
     if (ca?.vehicle && typeof ca.vehicle === 'object') {
       vehicle = {
+        registrationNo: ca.vehicle.registrationNo || ca.registrationNo || '',
         chassisNo: ca.vehicle.chassisNo,
         engineNo: ca.vehicle.engineNo,
         make: ca.vehicle.make,
         model: ca.vehicle.model,
         color: ca.vehicle.color,
+        hp: ca.vehicle.hp || ca.hp || '',
       };
     } else if (ca && (ca.chassisNo || ca.make)) {
       vehicle = {
+        registrationNo: ca.registrationNo || '',
         chassisNo: ca.chassisNo || '',
         engineNo: ca.engineNo || '',
         make: ca.make || '',
         model: ca.model || '',
         color: ca.color || '',
+        hp: ca.hp || '',
       };
     }
     const showroom = transaction.showroom
@@ -51,7 +55,9 @@ async function getVerification(req, res) {
       transactionDate: transaction.transactionDate,
       showroom,
       vehicle,
+      ownerName: ca?.ownerName ?? null,
       purchaserName: ca?.purchaserName ?? null,
+      verifiedAt: ca?.createdAt ?? null,
     });
   } catch (err) {
     res.status(500).json({ valid: false, message: 'Verification failed.' });
