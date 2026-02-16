@@ -3,7 +3,9 @@ import { useParams } from 'react-router-dom';
 import { CheckCircle, XCircle, ShieldCheck, Hash, Calendar, FileText, Settings, Palette, Gauge, UserCheck, Car, MapPin, Phone } from 'lucide-react';
 import { format } from 'date-fns';
 import api from '../api/client';
+import { formatPhone, getLogoUrl } from '../api/utils';
 import './Verification.css';
+
 
 export default function Verify() {
   const { id } = useParams();
@@ -50,17 +52,8 @@ export default function Verify() {
 
   const { receiptNumber, transactionDate, showroom, vehicle, ownerName } = data;
 
-  // Fix logo path
-  let logoUrl = null;
-  if (showroom?.logoPath) {
-    if (showroom.logoPath.startsWith('http')) {
-      logoUrl = showroom.logoPath;
-    } else {
-      const base = (api.defaults.baseURL || '').replace(/\/api$/, '');
-      const path = showroom.logoPath.startsWith('/') ? showroom.logoPath : `/${showroom.logoPath}`;
-      logoUrl = path.startsWith('/api') ? `${base}${path}` : `${base}/api${path}`;
-    }
-  }
+  const logoUrl = getLogoUrl(showroom?.logoPath, api.defaults.baseURL);
+
 
   const isCarMarkaz = showroom?.name?.toLowerCase().replace(/\s/g, '').includes('carmarkaz');
   const accentColor = isCarMarkaz ? '#fd0a0b' : '#0051a3';
@@ -136,8 +129,9 @@ export default function Verify() {
             <Phone size={24} className="contact-bar-icon" />
             <div className="contact-bar-text">
               <strong>Contact</strong>
-              {showroom?.phone || 'N/A'}
+              {showroom?.phone ? formatPhone(showroom.phone) : 'N/A'}
             </div>
+
           </div>
         </div>
 

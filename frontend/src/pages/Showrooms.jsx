@@ -1,20 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { Building2, Plus, Pencil, Trash2, MapPin, Phone, Image, Facebook, Instagram } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+
 import api from '../api/client';
+import { formatPhone, getLogoUrl } from '../api/utils';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+
+
 import '../components/ui.css';
 import './Showrooms.css';
 
-const getLogoUrl = (logoPath) => {
-  if (!logoPath) return null;
-  if (logoPath.startsWith('http')) return logoPath;
-  const base = (api.defaults.baseURL || '').replace(/\/api$/, '');
-  return logoPath.startsWith('/') ? `${base}${logoPath}` : `${base}/api${logoPath.startsWith('/') ? '' : '/'}${logoPath}`;
-};
+
 
 export default function Showrooms() {
+  const { isController } = useAuth();
   const [list, setList] = useState([]);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
@@ -65,7 +67,7 @@ export default function Showrooms() {
   const openEdit = (row) => {
     setEditing(row);
     setLogoFile(null);
-    setLogoPreview(row.logoPath ? getLogoUrl(row.logoPath) : null);
+    setLogoPreview(row.logoPath ? getLogoUrl(row.logoPath, api.defaults.baseURL) : null);
     setValue('name', row.name);
     setValue('address', row.address || '');
     setValue('phone', row.phone || '');
@@ -155,10 +157,13 @@ export default function Showrooms() {
           <h1 className="page-title">Showrooms</h1>
           <p className="page-subtitle">Add, edit, or remove showrooms. Logo, address, and social links (Instagram, WhatsApp, Facebook).</p>
         </div>
-        <button type="button" className="btn btn-primary" onClick={openCreate}>
-          <Plus size={18} /> Add Showroom
-        </button>
+        {!isController && (
+          <button type="button" className="btn btn-primary" onClick={openCreate}>
+            <Plus size={18} /> Add Showroom
+          </button>
+        )}
       </div>
+
 
       {error && <div className="alert alert-error">{error}</div>}
 
@@ -184,9 +189,10 @@ export default function Showrooms() {
                 <th>Phone</th>
                 <th>Social</th>
                 <th>Status</th>
-                <th>Actions</th>
+                {!isController && <th>Actions</th>}
               </tr>
             </thead>
+
             <tbody>
               {list.length === 0 ? (
                 <tr><td colSpan={7} className="table-empty">No showrooms yet. Add one to get started.</td></tr>
@@ -195,7 +201,8 @@ export default function Showrooms() {
                   <tr key={s._id}>
                     <td>
                       {s.logoPath ? (
-                        <img src={getLogoUrl(s.logoPath)} alt="" className="showroom-logo-thumb" />
+                        <img src={getLogoUrl(s.logoPath, api.defaults.baseURL)} alt="" className="showroom-logo-thumb" />
+
                       ) : (
                         <span className="showroom-logo-placeholder"><Image size={20} /></span>
                       )}
@@ -210,13 +217,16 @@ export default function Showrooms() {
                       {!s.socialLinks?.instagram && !s.socialLinks?.whatsapp && !s.socialLinks?.facebook && '—'}
                     </td>
                     <td><span className={s.isActive !== false ? 'badge badge-success' : 'badge badge-muted'}>{s.isActive !== false ? 'Active' : 'Inactive'}</span></td>
-                    <td>
-                      <div className="table-actions">
-                        <button type="button" className="btn btn-secondary btn-sm" onClick={() => openEdit(s)}><Pencil size={14} /></button>
-                        <button type="button" className="btn btn-danger btn-sm" onClick={() => onDeleteClick(s._id)} title="Delete"><Trash2 size={14} /></button>
-                      </div>
-                    </td>
+                    {!isController && (
+                      <td>
+                        <div className="table-actions">
+                          <button type="button" className="btn btn-secondary btn-sm" onClick={() => openEdit(s)}><Pencil size={14} /></button>
+                          <button type="button" className="btn btn-danger btn-sm" onClick={() => onDeleteClick(s._id)} title="Delete"><Trash2 size={14} /></button>
+                        </div>
+                      </td>
+                    )}
                   </tr>
+
                 ))
               )}
             </tbody>
@@ -261,8 +271,22 @@ export default function Showrooms() {
               </div>
               <div className="form-group">
                 <label>Phone</label>
-                <input {...register('phone')} placeholder="Phone number" />
+                <input
+                  {...register('phone', {
+                    pattern: {
+                      value: /^\d{4}-\d{7}$/,
+                      message: 'Format: 0300-1234567'
+                    },
+                    onChange: (e) => {
+                      e.target.value = formatPhone(e.target.value);
+                    }
+                  })}
+                  placeholder="0300-1234567"
+                  maxLength={12}
+                />
+                {errors.phone && <span className="form-error">{errors.phone.message}</span>}
               </div>
+
               <div className="showroom-social-fields">
                 <label>Social links</label>
                 <div className="form-group">

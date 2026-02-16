@@ -55,3 +55,23 @@ export const formatDate = (date) => {
     const year = d.getFullYear();
     return `${day}/${month}/${year}`;
 };
+
+export const getLogoUrl = (logoPath, apiBaseURL = '') => {
+    if (!logoPath) return null;
+    if (logoPath.startsWith('http')) return logoPath;
+
+    // Normalize base URL: remove trailing /api or /
+    let base = (apiBaseURL || '').replace(/\/api\/?$/, '').replace(/\/+$/, '');
+
+    // Ensure path starts with /
+    const path = logoPath.startsWith('/') ? logoPath : `/${logoPath}`;
+
+    // If path already starts with /api, just append to base
+    if (path.startsWith('/api')) {
+        return `${base}${path}`;
+    }
+
+    // Otherwise append /api/path
+    return `${base}/api${path}`;
+};
+

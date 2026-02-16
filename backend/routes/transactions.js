@@ -11,8 +11,9 @@ router.use(protect);
 router.use(restrictToShowroom);
 
 function getNextReceiptNumber() {
-  return `RCP-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+  return `RCP-${Math.floor(10000 + Math.random() * 90000)}`;
 }
+
 
 router.get(
   '/',
@@ -68,40 +69,40 @@ router.post(
     body('transactionDate').optional().isISO8601(),
   ],
   asyncHandler(async (req, res) => {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
-      if (req.body.type === 'sale') {
-        return res.status(400).json({ message: 'Use POST /api/car-accounts to create a sale (car account).' });
-      }
-      const showroomId = req.body.showroom || (req.user.role === 'admin' ? null : req.showroomId);
-      if (!showroomId) return res.status(400).json({ message: 'Showroom is required.' });
-      if (req.user.role !== 'admin' && showroomId !== req.showroomId) {
-        return res.status(403).json({ message: 'Access denied.' });
-      }
-      const transaction = await Transaction.create({
-        showroom: showroomId,
-        type: 'purchase',
-        amount: req.body.amount,
-        commission: req.body.commission ?? 0,
-        make: req.body.make || '',
-        model: req.body.model || '',
-        chassisNo: req.body.chassisNo || '',
-        engineNo: req.body.engineNo || '',
-        transactionDate: req.body.transactionDate ? new Date(req.body.transactionDate) : new Date(),
-        createdBy: req.user._id,
-      });
-      await logActivity({
-        userId: req.user._id,
-        action: 'transaction_create',
-        entityType: 'transaction',
-        entityId: transaction._id,
-        showroomId: transaction.showroom,
-        metadata: { type: 'purchase' },
-      });
-      const t = await Transaction.findById(transaction._id)
-        .populate('showroom', 'name address phone ownerName')
-        .populate('carAccount')
-        .populate('createdBy', 'name email');
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+    if (req.body.type === 'sale') {
+      return res.status(400).json({ message: 'Use POST /api/car-accounts to create a sale (car account).' });
+    }
+    const showroomId = req.body.showroom || (req.user.role === 'admin' ? null : req.showroomId);
+    if (!showroomId) return res.status(400).json({ message: 'Showroom is required.' });
+    if (req.user.role !== 'admin' && showroomId !== req.showroomId) {
+      return res.status(403).json({ message: 'Access denied.' });
+    }
+    const transaction = await Transaction.create({
+      showroom: showroomId,
+      type: 'purchase',
+      amount: req.body.amount,
+      commission: req.body.commission ?? 0,
+      make: req.body.make || '',
+      model: req.body.model || '',
+      chassisNo: req.body.chassisNo || '',
+      engineNo: req.body.engineNo || '',
+      transactionDate: req.body.transactionDate ? new Date(req.body.transactionDate) : new Date(),
+      createdBy: req.user._id,
+    });
+    await logActivity({
+      userId: req.user._id,
+      action: 'transaction_create',
+      entityType: 'transaction',
+      entityId: transaction._id,
+      showroomId: transaction.showroom,
+      metadata: { type: 'purchase' },
+    });
+    const t = await Transaction.findById(transaction._id)
+      .populate('showroom', 'name address phone ownerName')
+      .populate('carAccount')
+      .populate('createdBy', 'name email');
     res.status(201).json(t);
   })
 );

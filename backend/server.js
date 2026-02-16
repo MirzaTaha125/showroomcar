@@ -11,7 +11,8 @@ import connectDB from './config/db.js';
 import { validateEnv } from './utils/validateEnv.js';
 import { setupGracefulShutdown } from './utils/gracefulShutdown.js';
 import { requestLogger, errorLogger } from './middleware/logger.js';
-import { sanitizeBody, sanitizeQuery, authLimiter } from './middleware/security.js';
+import { sanitizeBody, sanitizeQuery } from './middleware/security.js';
+
 import { protect, adminOnly } from './middleware/auth.js';
 
 /** Return 503 if DB is not connected (avoids 500s from failed queries). */
@@ -51,7 +52,8 @@ app.use(helmet({
 }));
 
 // CORS - support multiple origins from env variable
-const baseAllowed = ['http://localhost:3000', 'http://localhost:5173']; // Common dev origins
+const baseAllowed = ['http://localhost:3000', 'http://localhost:5173', 'https://www.carmarkaz.com', 'https://carmarkaz.com']; // Common dev origins
+
 const envOrigins = process.env.FRONTEND_URL
   ? process.env.FRONTEND_URL.split(',').map(origin => origin.trim())
   : [];
@@ -159,8 +161,9 @@ app.post('/api/car-accounts/upload-biometric', protect, (req, res) => {
   });
 });
 
-// Apply rate limiting to auth routes
-app.use('/api/auth', authLimiter, authRoutes);
+// Apply auth routes
+app.use('/api/auth', authRoutes);
+
 app.use('/api/health', (req, res) => res.json({ ok: true }));
 app.use('/api/showrooms', requireDb, showroomRoutes);
 app.use('/api/users', requireDb, userRoutes);

@@ -17,8 +17,9 @@ const CAR_ACCOUNT_TYPE = 'sale';
 const CONTROLLER_EDIT_WINDOW_MS = 12 * 60 * 60 * 1000;
 
 function getNextReceiptNumber() {
-  return `RCP-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+  return `RCP-${Math.floor(10000 + Math.random() * 90000)}`;
 }
+
 
 /** List car accounts (CarAccount model; each has transaction + vehicle) */
 router.get(

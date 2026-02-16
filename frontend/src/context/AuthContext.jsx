@@ -42,7 +42,9 @@ export function AuthProvider({ children }) {
     return data.user;
   };
 
-  const value = { user, loading, login, logout, refreshUser, isAdmin: user?.role === 'admin' };
+  const value = { user, loading, login, logout, refreshUser, isAdmin: user?.role === 'admin', isController: user?.role === 'user' };
+
+
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 

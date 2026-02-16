@@ -9,6 +9,8 @@ import './Users.css';
 
 
 export default function Users() {
+  const { isController } = useAuth();
+
   const [users, setUsers] = useState([]);
   const [showrooms, setShowrooms] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -113,10 +115,13 @@ export default function Users() {
           <h1 className="page-title">Users</h1>
           <p className="page-subtitle">Manage users and assign them to showrooms (Admin only).</p>
         </div>
-        <button type="button" className="btn btn-primary" onClick={openCreate}>
-          <UserPlus size={18} /> Add User
-        </button>
+        {!isController && (
+          <button type="button" className="btn btn-primary" onClick={openCreate}>
+            <UserPlus size={18} /> Add User
+          </button>
+        )}
       </div>
+
 
       {error && <div className="alert alert-error">{error}</div>}
 
@@ -141,9 +146,10 @@ export default function Users() {
                 <th>Role</th>
                 <th>Showroom</th>
                 <th>Status</th>
-                <th>Actions</th>
+                {!isController && <th>Actions</th>}
               </tr>
             </thead>
+
             <tbody>
               {users.length === 0 ? (
                 <tr><td colSpan={6} className="table-empty">No users yet.</td></tr>
@@ -155,13 +161,16 @@ export default function Users() {
                     <td><span className={u.role === 'admin' ? 'badge badge-warning' : 'badge badge-muted'}>{u.role === 'admin' ? 'Admin' : 'Controller'}</span></td>
                     <td>{u.showroom?.name || '—'}</td>
                     <td><span className={u.isActive !== false ? 'badge badge-success' : 'badge badge-muted'}>{u.isActive !== false ? 'Active' : 'Inactive'}</span></td>
-                    <td>
-                      <div className="table-actions">
-                        <button type="button" className="btn btn-secondary btn-sm" onClick={() => openEdit(u)}><Pencil size={14} /></button>
-                        <button type="button" className="btn btn-danger btn-sm" onClick={() => onDeleteClick(u._id)} title="Delete"><Trash2 size={14} /></button>
-                      </div>
-                    </td>
+                    {!isController && (
+                      <td>
+                        <div className="table-actions">
+                          <button type="button" className="btn btn-secondary btn-sm" onClick={() => openEdit(u)}><Pencil size={14} /></button>
+                          <button type="button" className="btn btn-danger btn-sm" onClick={() => onDeleteClick(u._id)} title="Delete"><Trash2 size={14} /></button>
+                        </div>
+                      </td>
+                    )}
                   </tr>
+
                 ))
               )}
             </tbody>

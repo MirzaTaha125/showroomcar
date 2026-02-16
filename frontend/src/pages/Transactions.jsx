@@ -11,7 +11,8 @@ import '../components/ui.css';
 import './Transactions.css';
 
 export default function Transactions() {
-  const { isAdmin } = useAuth();
+  const { isAdmin, isController } = useAuth();
+
   const [transactions, setTransactions] = useState([]);
   const [showrooms, setShowrooms] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -198,9 +199,10 @@ export default function Transactions() {
                 <th>Purchaser</th>
                 <th>Seller</th>
                 <th>Amount</th>
-                <th>Actions</th>
+                {!isController && <th>Actions</th>}
               </tr>
             </thead>
+
             <tbody>
               {filtered.length === 0 ? (
                 <tr><td colSpan={10} className="table-empty">No transactions yet.</td></tr>
@@ -228,13 +230,16 @@ export default function Transactions() {
                       <td>{purchaser}</td>
                       <td>{seller}</td>
                       <td>PKR {t.amount?.toLocaleString() ?? '0'}</td>
-                      <td>
-                        <div className="table-actions">
-                          <button type="button" className="btn btn-secondary btn-sm" onClick={() => openEdit(t)}><Pencil size={14} /></button>
-                          <button type="button" className="btn btn-danger btn-sm" onClick={() => onDeleteClick(t._id)} title="Delete"><Trash2 size={14} /></button>
-                        </div>
-                      </td>
+                      {!isController && (
+                        <td>
+                          <div className="table-actions">
+                            <button type="button" className="btn btn-secondary btn-sm" onClick={() => openEdit(t)}><Pencil size={14} /></button>
+                            <button type="button" className="btn btn-danger btn-sm" onClick={() => onDeleteClick(t._id)} title="Delete"><Trash2 size={14} /></button>
+                          </div>
+                        </td>
+                      )}
                     </tr>
+
                   );
                 })
               )}

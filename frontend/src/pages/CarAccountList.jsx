@@ -19,7 +19,8 @@ function canEditOrDelete(item, isAdmin) {
 }
 
 export default function CarAccountList({ type, basePath }) {
-  const { isAdmin } = useAuth();
+  const { isAdmin, isController } = useAuth();
+
   const [list, setList] = useState([]);
   const [showrooms, setShowrooms] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -161,10 +162,13 @@ export default function CarAccountList({ type, basePath }) {
             {!type && 'Delivery Orders'}</h1>
           <p className="page-subtitle">Sale contracts (vehicle, owner, purchaser). Create and edit here; view or download PDFs from the action buttons. For payment records, use Transactions.</p>
         </div>
-        <Link to={`${basePath || '/car-account'}/new`} className="btn btn-primary" target="_blank">
-          <FileText size={18} /> New {type ? (type === 'VEHICLE DELIVERY ORDER' ? 'Delivery Order' : type === 'VEHICLE SALE RECEIPT' ? 'Sale Receipt' : 'Purchase Order') : 'Delivery Order'}
-        </Link>
+        {!isController && (
+          <Link to={`${basePath || '/car-account'}/new`} className="btn btn-primary" target="_blank">
+            <FileText size={18} /> New {type ? (type === 'VEHICLE DELIVERY ORDER' ? 'Delivery Order' : type === 'VEHICLE SALE RECEIPT' ? 'Sale Receipt' : 'Purchase Order') : 'Delivery Order'}
+          </Link>
+        )}
       </div>
+
 
       {isAdmin && showrooms.length > 0 && (
         <div className="car-account-list-filters card">
@@ -250,17 +254,20 @@ export default function CarAccountList({ type, basePath }) {
                         <div className="table-actions">
                           <button type="button" className="btn btn-primary btn-sm" title="Preview PDF in browser" onClick={() => openPdfPreview(txId, 'receipt')} disabled={pdfPreviewLoading !== null}>{pdfPreviewLoading === `${txId}-receipt` ? '...' : <Eye size={14} />} View PDF</button>
                           <button type="button" className="btn btn-secondary btn-sm" title="Download PDF" onClick={() => downloadPdf(txId, 'receipt')} disabled={pdfLoading !== null}>{pdfLoading === `${txId}-receipt` ? '...' : <FileDown size={14} />} Download</button>
-                          {canEditOrDelete(item, isAdmin) ? (
-                            <>
-                              <Link to={`${basePath || '/car-account'}/edit/${item._id}`} className="btn btn-secondary btn-sm" title="Edit contract"><Pencil size={14} /> Edit</Link>
-                              <button type="button" className="btn btn-danger btn-sm" onClick={() => onDeleteClick(item._id)} title="Delete"><Trash2 size={14} /></button>
-                            </>
-                          ) : (
-                            <span className="table-muted" title="Edit/delete not allowed after 12 hours">—</span>
+                          {!isController && (
+                            canEditOrDelete(item, isAdmin) ? (
+                              <>
+                                <Link to={`${basePath || '/car-account'}/edit/${item._id}`} className="btn btn-secondary btn-sm" title="Edit contract"><Pencil size={14} /> Edit</Link>
+                                <button type="button" className="btn btn-danger btn-sm" onClick={() => onDeleteClick(item._id)} title="Delete"><Trash2 size={14} /></button>
+                              </>
+                            ) : (
+                              <span className="table-muted" title="Edit/delete not allowed after 12 hours">—</span>
+                            )
                           )}
                         </div>
                       </td>
                     </tr>
+
                   );
                 })
               )}

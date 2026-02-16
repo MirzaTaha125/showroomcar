@@ -10,7 +10,8 @@ import '../components/ui.css';
 import './CarAccountList.css'; // Reuse styles
 
 export default function TokenReceipts() {
-    const { isAdmin } = useAuth();
+    const { isAdmin, isController } = useAuth();
+
     const [list, setList] = useState([]);
     const [showrooms, setShowrooms] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -118,21 +119,25 @@ export default function TokenReceipts() {
                     <h1 className="page-title"><FileText size={28} className="page-title-icon" /> Token Receipts</h1>
                     <p className="page-subtitle">Manage token receipts for vehicle sales.</p>
                 </div>
+            </div>
+            {!isController && (
                 <Link to="/token-receipts/new" className="btn btn-primary">
                     <FileText size={18} /> New Token Receipt
                 </Link>
-            </div>
-
-            {isAdmin && showrooms.length > 0 && (
-                <div className="car-account-list-filters card">
-                    <select value={filterShowroom} onChange={(e) => setFilterShowroom(e.target.value)} className="transactions-filter-select">
-                        <option value="">All showrooms</option>
-                        {showrooms.map((s) => <option key={s._id} value={s._id}>{s.name}</option>)}
-                    </select>
-                    <input type="date" value={filterDateFrom} onChange={(e) => setFilterDateFrom(e.target.value)} className="transactions-filter-select" />
-                    <input type="date" value={filterDateTo} onChange={(e) => setFilterDateTo(e.target.value)} className="transactions-filter-select" />
-                </div>
             )}
+
+            {
+                isAdmin && showrooms.length > 0 && (
+                    <div className="car-account-list-filters card">
+                        <select value={filterShowroom} onChange={(e) => setFilterShowroom(e.target.value)} className="transactions-filter-select">
+                            <option value="">All showrooms</option>
+                            {showrooms.map((s) => <option key={s._id} value={s._id}>{s.name}</option>)}
+                        </select>
+                        <input type="date" value={filterDateFrom} onChange={(e) => setFilterDateFrom(e.target.value)} className="transactions-filter-select" />
+                        <input type="date" value={filterDateTo} onChange={(e) => setFilterDateTo(e.target.value)} className="transactions-filter-select" />
+                    </div>
+                )
+            }
 
             {error && <div className="alert alert-error">{error}</div>}
 
@@ -146,21 +151,23 @@ export default function TokenReceipts() {
                 variant="danger"
             />
 
-            {pdfPreviewUrl && (
-                <div className="pdf-preview-overlay" onClick={closePdfPreview}>
-                    <div className="pdf-preview-modal" onClick={(e) => e.stopPropagation()}>
-                        <div className="pdf-preview-header">
-                            <span>PDF Preview</span>
-                            <button type="button" className="btn btn-ghost btn-sm" onClick={closePdfPreview}><X size={20} /></button>
-                        </div>
-                        <iframe src={pdfPreviewUrl} title="PDF Preview" className="pdf-preview-iframe" />
-                        <div className="pdf-preview-actions">
-                            <button type="button" className="btn btn-secondary" onClick={() => pdfPreviewMeta && downloadPdf(pdfPreviewMeta.id)}>Download PDF</button>
-                            <button type="button" className="btn btn-primary" onClick={closePdfPreview}>Close</button>
+            {
+                pdfPreviewUrl && (
+                    <div className="pdf-preview-overlay" onClick={closePdfPreview}>
+                        <div className="pdf-preview-modal" onClick={(e) => e.stopPropagation()}>
+                            <div className="pdf-preview-header">
+                                <span>PDF Preview</span>
+                                <button type="button" className="btn btn-ghost btn-sm" onClick={closePdfPreview}><X size={20} /></button>
+                            </div>
+                            <iframe src={pdfPreviewUrl} title="PDF Preview" className="pdf-preview-iframe" />
+                            <div className="pdf-preview-actions">
+                                <button type="button" className="btn btn-secondary" onClick={() => pdfPreviewMeta && downloadPdf(pdfPreviewMeta.id)}>Download PDF</button>
+                                <button type="button" className="btn btn-primary" onClick={closePdfPreview}>Close</button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             <div className="card">
                 <div className="table-wrap">
@@ -172,9 +179,10 @@ export default function TokenReceipts() {
                                 <th>Received From</th>
                                 <th>Amount</th>
                                 <th>Purchaser</th>
-                                <th>Actions</th>
+                                {!isController && <th>Actions</th>}
                             </tr>
                         </thead>
+
                         <tbody>
                             {filtered.length === 0 ? (
                                 <tr><td colSpan={6} className="table-empty">No token receipts found.</td></tr>
@@ -189,15 +197,18 @@ export default function TokenReceipts() {
                                         <td>{item.fromMrMrs}</td>
                                         <td>PKR {item.amountReceived.toLocaleString()}</td>
                                         <td>{item.purchaserName}</td>
-                                        <td>
-                                            <div className="table-actions">
-                                                <button type="button" className="btn btn-primary btn-sm" onClick={() => openPdfPreview(item._id)}><Eye size={14} /> View</button>
-                                                <button type="button" className="btn btn-secondary btn-sm" onClick={() => downloadPdf(item._id)} disabled={pdfLoading === item._id}>{pdfLoading === item._id ? '...' : <FileDown size={14} />} Download</button>
-                                                <Link to={`/token-receipts/edit/${item._id}`} className="btn btn-secondary btn-sm"><Pencil size={14} /> Edit</Link>
-                                                <button type="button" className="btn btn-danger btn-sm" onClick={() => onDeleteClick(item._id)}><Trash2 size={14} /></button>
-                                            </div>
-                                        </td>
+                                        {!isController && (
+                                            <td>
+                                                <div className="table-actions">
+                                                    <button type="button" className="btn btn-primary btn-sm" onClick={() => openPdfPreview(item._id)}><Eye size={14} /> View</button>
+                                                    <button type="button" className="btn btn-secondary btn-sm" onClick={() => downloadPdf(item._id)} disabled={pdfLoading === item._id}>{pdfLoading === item._id ? '...' : <FileDown size={14} />} Download</button>
+                                                    <Link to={`/token-receipts/edit/${item._id}`} className="btn btn-secondary btn-sm"><Pencil size={14} /> Edit</Link>
+                                                    <button type="button" className="btn btn-danger btn-sm" onClick={() => onDeleteClick(item._id)}><Trash2 size={14} /></button>
+                                                </div>
+                                            </td>
+                                        )}
                                     </tr>
+
                                 ))
                             )}
                         </tbody>
@@ -205,5 +216,6 @@ export default function TokenReceipts() {
                 </div>
             </div>
         </div>
+
     );
 }

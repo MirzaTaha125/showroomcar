@@ -29,7 +29,8 @@ const vehicleFields = [
 ];
 
 export default function Vehicles() {
-  const { isAdmin } = useAuth();
+  const { isAdmin, isController } = useAuth();
+
   const [vehicles, setVehicles] = useState([]);
   const [showrooms, setShowrooms] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -55,7 +56,7 @@ export default function Vehicles() {
   };
 
   useEffect(() => {
-    if (isAdmin) api.get('/showrooms').then((res) => setShowrooms(res.data)).catch(() => {});
+    if (isAdmin) api.get('/showrooms').then((res) => setShowrooms(res.data)).catch(() => { });
   }, [isAdmin]);
 
   useEffect(() => {
@@ -117,13 +118,16 @@ export default function Vehicles() {
     <div className="vehicles-page">
       <div className="page-header card-header">
         <div>
-<h1 className="page-title">Inventory</h1>
-        <p className="page-subtitle">Manage vehicle stock. Add vehicles with full details. Vehicles are marked sold when used in a Delivery Order.</p>
+          <h1 className="page-title">Inventory</h1>
+          <p className="page-subtitle">Manage vehicle stock. Add vehicles with full details. Vehicles are marked sold when used in a Delivery Order.</p>
         </div>
-        <button type="button" className="btn btn-primary" onClick={openCreate}>
-          <Plus size={18} /> Add Vehicle
-        </button>
+        {!isController && (
+          <button type="button" className="btn btn-primary" onClick={openCreate}>
+            <Plus size={18} /> Add Vehicle
+          </button>
+        )}
       </div>
+
 
       {isAdmin && (
         <div className="vehicles-filters card">
@@ -162,9 +166,10 @@ export default function Vehicles() {
                 <th>Color</th>
                 {isAdmin && <th>Showroom</th>}
                 <th>Status</th>
-                <th>Actions</th>
+                {!isController && <th>Actions</th>}
               </tr>
             </thead>
+
             <tbody>
               {vehicles.length === 0 ? (
                 <tr><td colSpan={isAdmin ? 6 : 5} className="table-empty">No inventory yet.</td></tr>
@@ -176,13 +181,16 @@ export default function Vehicles() {
                     <td>{v.color}</td>
                     {isAdmin && <td>{v.showroom?.name || '—'}</td>}
                     <td><span className={v.status === 'sold' ? 'badge badge-warning' : 'badge badge-success'}>{v.status}</span></td>
-                    <td>
-                      <div className="table-actions">
-                        <button type="button" className="btn btn-secondary btn-sm" onClick={() => openEdit(v)}><Pencil size={14} /></button>
-                        <button type="button" className="btn btn-danger btn-sm" onClick={() => onDeleteClick(v._id)} title="Delete"><Trash2 size={14} /></button>
-                      </div>
-                    </td>
+                    {!isController && (
+                      <td>
+                        <div className="table-actions">
+                          <button type="button" className="btn btn-secondary btn-sm" onClick={() => openEdit(v)}><Pencil size={14} /></button>
+                          <button type="button" className="btn btn-danger btn-sm" onClick={() => onDeleteClick(v._id)} title="Delete"><Trash2 size={14} /></button>
+                        </div>
+                      </td>
+                    )}
                   </tr>
+
                 ))
               )}
             </tbody>
