@@ -61,18 +61,26 @@ const allowedOrigins = [...new Set([...baseAllowed, ...envOrigins])];
 
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
 
-    if (allowedOrigins.includes(origin) || allowedOrigins.some(o => origin.startsWith(o))) {
+    const normalize = (u) => (u || '').replace(/\/+$/, '');
+    const normalizedOrigin = normalize(origin);
+
+    const isAllowed = allowedOrigins.some(allowed => {
+      const normalizedAllowed = normalize(allowed);
+      return normalizedOrigin === normalizedAllowed || normalizedOrigin.startsWith(normalizedAllowed);
+    });
+
+    if (isAllowed) {
       callback(null, true);
     } else {
-      console.warn(`[CORS] Rejected origin: ${origin}`);
+      console.warn(`[CORS] Rejected origin: ${origin} (Not in allowed: ${allowedOrigins.join(', ')})`);
       callback(new Error('Not allowed by CORS'));
     }
   },
   credentials: true
 }));
+
 
 // Compression
 app.use(compression());
@@ -217,7 +225,9 @@ async function start() {
     console.log(`\x1b[32m✓\x1b[0m Server:      \x1b[36mhttp://localhost:${PORT}\x1b[0m`);
     console.log(`\x1b[32m✓\x1b[0m Environment: \x1b[36m${process.env.NODE_ENV || 'development'}\x1b[0m`);
     console.log(`\x1b[32m✓\x1b[0m Database:    \x1b[32mCONNECTED\x1b[0m`);
+    console.log(`\x1b[32m✓\x1b[0m CORS Allowed: \x1b[36m${allowedOrigins.join(', ')}\x1b[0m`);
     console.log(`\x1b[36m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\x1b[0m`);
+
   });
   setupGracefulShutdown(server);
 }
