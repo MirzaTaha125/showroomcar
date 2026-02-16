@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { UserPlus, Pencil, Trash2, Users as UsersIcon } from 'lucide-react';
 import api from '../api/client';
+import { useAuth } from '../context/AuthContext';
 import { formatCnic, formatPhone } from '../api/utils';
+
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import '../components/ui.css';
 import './Users.css';

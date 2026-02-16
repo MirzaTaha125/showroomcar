@@ -6,9 +6,13 @@ import QRCode from 'qrcode';
 // For QR codes, use production URL (not localhost)
 const frontendUrl = (() => {
   const urls = (process.env.FRONTEND_URL || 'http://localhost:3000').split(',').map(u => u.trim());
-  // Prefer https URLs for QR codes (production), fallback to first URL
-  return urls.find(u => u.startsWith('https://')) || urls[0];
+  // Prioritize carmarkaz.com production URL, then any https, then first URL
+  return urls.find(u => u.includes('www.carmarkaz.com')) ||
+    urls.find(u => u.includes('carmarkaz.com')) ||
+    urls.find(u => u.startsWith('https://')) ||
+    urls[0];
 })();
+
 
 /** Global cache for static assets (social icons) to avoid re-loading/resizing on every PDF. */
 let cachedSocialIcons = null;
