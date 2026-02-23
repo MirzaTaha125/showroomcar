@@ -117,11 +117,10 @@ export default function Users() {
           <h1 className="page-title">Users</h1>
           <p className="page-subtitle">Manage users and assign them to showrooms (Admin only).</p>
         </div>
-        {!isController && (
-          <button type="button" className="btn btn-primary" onClick={openCreate}>
-            <UserPlus size={18} /> Add User
-          </button>
-        )}
+        <button type="button" className="btn btn-primary" onClick={openCreate}>
+          <UserPlus size={18} /> Add User
+        </button>
+
       </div>
 
 

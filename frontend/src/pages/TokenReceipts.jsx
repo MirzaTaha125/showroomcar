@@ -120,11 +120,10 @@ export default function TokenReceipts() {
                     <p className="page-subtitle">Manage token receipts for vehicle sales.</p>
                 </div>
             </div>
-            {!isController && (
-                <Link to="/token-receipts/new" className="btn btn-primary">
-                    <FileText size={18} /> New Token Receipt
-                </Link>
-            )}
+            <Link to="/token-receipts/new" className="btn btn-primary">
+                <FileText size={18} /> New Token Receipt
+            </Link>
+
 
             {
                 isAdmin && showrooms.length > 0 && (

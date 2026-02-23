@@ -121,11 +121,10 @@ export default function Vehicles() {
           <h1 className="page-title">Inventory</h1>
           <p className="page-subtitle">Manage vehicle stock. Add vehicles with full details. Vehicles are marked sold when used in a Delivery Order.</p>
         </div>
-        {!isController && (
-          <button type="button" className="btn btn-primary" onClick={openCreate}>
-            <Plus size={18} /> Add Vehicle
-          </button>
-        )}
+        <button type="button" className="btn btn-primary" onClick={openCreate}>
+          <Plus size={18} /> Add Vehicle
+        </button>
+
       </div>
 
 

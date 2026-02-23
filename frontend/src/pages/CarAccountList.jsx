@@ -162,11 +162,10 @@ export default function CarAccountList({ type, basePath }) {
             {!type && 'Delivery Orders'}</h1>
           <p className="page-subtitle">Sale contracts (vehicle, owner, purchaser). Create and edit here; view or download PDFs from the action buttons. For payment records, use Transactions.</p>
         </div>
-        {!isController && (
-          <Link to={`${basePath || '/car-account'}/new`} className="btn btn-primary" target="_blank">
-            <FileText size={18} /> New {type ? (type === 'VEHICLE DELIVERY ORDER' ? 'Delivery Order' : type === 'VEHICLE SALE RECEIPT' ? 'Sale Receipt' : 'Purchase Order') : 'Delivery Order'}
-          </Link>
-        )}
+        <Link to={`${basePath || '/car-account'}/new`} className="btn btn-primary" target="_blank">
+          <FileText size={18} /> New {type ? (type === 'VEHICLE DELIVERY ORDER' ? 'Delivery Order' : type === 'VEHICLE SALE RECEIPT' ? 'Sale Receipt' : 'Purchase Order') : 'Delivery Order'}
+        </Link>
+
       </div>
 
 

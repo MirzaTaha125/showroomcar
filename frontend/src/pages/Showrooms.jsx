@@ -157,11 +157,10 @@ export default function Showrooms() {
           <h1 className="page-title">Showrooms</h1>
           <p className="page-subtitle">Add, edit, or remove showrooms. Logo, address, and social links (Instagram, WhatsApp, Facebook).</p>
         </div>
-        {!isController && (
-          <button type="button" className="btn btn-primary" onClick={openCreate}>
-            <Plus size={18} /> Add Showroom
-          </button>
-        )}
+        <button type="button" className="btn btn-primary" onClick={openCreate}>
+          <Plus size={18} /> Add Showroom
+        </button>
+
       </div>
 
 
