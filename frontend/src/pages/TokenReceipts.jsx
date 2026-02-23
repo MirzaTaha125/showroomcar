@@ -179,6 +179,7 @@ export default function TokenReceipts() {
                                 <th>Received From</th>
                                 <th>Amount</th>
                                 <th>Purchaser</th>
+                                <th>Created By</th>
                                 {!isController && <th>Actions</th>}
                             </tr>
                         </thead>
@@ -197,7 +198,9 @@ export default function TokenReceipts() {
                                         <td>{item.fromMrMrs}</td>
                                         <td>PKR {item.amountReceived.toLocaleString()}</td>
                                         <td>{item.purchaserName}</td>
+                                        <td>{item.createdBy?.name || item.addedBy?.name || '—'}</td>
                                         {!isController && (
+
                                             <td>
                                                 <div className="table-actions">
                                                     <button type="button" className="btn btn-primary btn-sm" onClick={() => openPdfPreview(item._id)}><Eye size={14} /> View</button>

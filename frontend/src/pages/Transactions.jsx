@@ -199,6 +199,7 @@ export default function Transactions() {
                 <th>Purchaser</th>
                 <th>Seller</th>
                 <th>Amount</th>
+                <th>Created By</th>
                 {!isController && <th>Actions</th>}
               </tr>
             </thead>
@@ -230,7 +231,9 @@ export default function Transactions() {
                       <td>{purchaser}</td>
                       <td>{seller}</td>
                       <td>PKR {t.amount?.toLocaleString() ?? '0'}</td>
+                      <td>{t.createdBy?.name || '—'}</td>
                       {!isController && (
+
                         <td>
                           <div className="table-actions">
                             <button type="button" className="btn btn-secondary btn-sm" onClick={() => openEdit(t)}><Pencil size={14} /></button>

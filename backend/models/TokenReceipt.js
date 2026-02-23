@@ -28,7 +28,8 @@ const tokenReceiptSchema = new mongoose.Schema(
         sellerMobile: { type: String, trim: true },
         sellerAddress: { type: String, trim: true },
 
-        addedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+        createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+
     },
     { timestamps: true }
 );

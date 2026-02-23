@@ -221,6 +221,7 @@ export default function CarAccountList({ type, basePath }) {
                 <th>Owner / Dealer</th>
                 <th>Amount</th>
                 <th>Downloads</th>
+                <th>Created By</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -250,7 +251,9 @@ export default function CarAccountList({ type, basePath }) {
                       <td>{item.ownerName || item.showroom?.ownerName || item.showroom?.name || '—'}</td>
                       <td>PKR {(amount ?? 0).toLocaleString()}</td>
                       <td>{item.transaction?.pdfCount || 0}</td>
+                      <td>{item.createdBy?.name || '—'}</td>
                       <td>
+
                         <div className="table-actions">
                           <button type="button" className="btn btn-primary btn-sm" title="Preview PDF in browser" onClick={() => openPdfPreview(txId, 'receipt')} disabled={pdfPreviewLoading !== null}>{pdfPreviewLoading === `${txId}-receipt` ? '...' : <Eye size={14} />} View PDF</button>
                           <button type="button" className="btn btn-secondary btn-sm" title="Download PDF" onClick={() => downloadPdf(txId, 'receipt')} disabled={pdfLoading !== null}>{pdfLoading === `${txId}-receipt` ? '...' : <FileDown size={14} />} Download</button>

@@ -26,7 +26,7 @@ router.get(
 
         const receipts = await TokenReceipt.find(filter)
             .populate('showroom', 'name address phone logoPath')
-            .populate('addedBy', 'name email')
+            .populate('createdBy', 'name email')
             .sort({ createdAt: -1 })
             .lean();
         res.json(receipts);
@@ -42,7 +42,7 @@ router.get(
 
         const receipt = await TokenReceipt.findById(req.params.id)
             .populate('showroom', 'name address phone logoPath')
-            .populate('addedBy', 'name email')
+            .populate('createdBy', 'name email')
             .lean();
 
         if (!receipt) return res.status(404).json({ message: 'Token receipt not found.' });
@@ -93,7 +93,7 @@ router.post(
         const receipt = await TokenReceipt.create({
             ...req.body,
             showroom: showroomId,
-            addedBy: req.user._id,
+            createdBy: req.user._id,
         });
 
         await logActivity({
@@ -107,7 +107,7 @@ router.post(
 
         const r = await TokenReceipt.findById(receipt._id)
             .populate('showroom', 'name address phone logoPath')
-            .populate('addedBy', 'name email');
+            .populate('createdBy', 'name email');
         res.status(201).json(r);
     })
 );
@@ -144,7 +144,7 @@ router.put(
 
         const r = await TokenReceipt.findById(receipt._id)
             .populate('showroom', 'name address phone logoPath')
-            .populate('addedBy', 'name email');
+            .populate('createdBy', 'name email');
         res.json(r);
     })
 );
