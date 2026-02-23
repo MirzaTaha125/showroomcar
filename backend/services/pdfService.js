@@ -327,7 +327,8 @@ async function drawReceiptLayout(doc, transaction, qrImage, options = {}) {
 
   const drawField = (label, value, x, currY, width, labelWidth, options = {}) => {
     const { underline = false, boldLabel = true, valueBold = false } = options;
-    const str = value instanceof Date ? fmt(value) : (value != null && value !== '' ? String(value) : '');
+    const str = (value instanceof Date ? fmt(value) : (value != null && value !== '' ? String(value) : '')).toUpperCase();
+
     const valueX = x + labelWidth + 5; // Add 5px padding between label and value
     const vWidth = width - labelWidth - 5;
 
@@ -603,10 +604,11 @@ async function drawReceiptLayout(doc, transaction, qrImage, options = {}) {
       doc.rect(tableLeft, y, col1Width, rowHeight).strokeColor(COLORS.border).stroke();
       doc.rect(amountLeft, y, col2Width, rowHeight).strokeColor(COLORS.border).stroke();
       doc.rect(detailsLeft, y, col3Width, rowHeight).strokeColor(COLORS.border).stroke();
-      doc.text(desc + (pDate ? ` (${pDate})` : ''), tableLeft + 6, y + 6, { width: col1Width - 10 });
+      doc.text(desc.toUpperCase() + (pDate ? ` (${pDate})` : ''), tableLeft + 6, y + 6, { width: col1Width - 10 });
       doc.text(amtStr, amountLeft + 6, y + 6, { width: col2Width - 10 });
-      doc.text(details, detailsLeft + 6, y + 6, { width: col3Width - 10 });
+      doc.text(details.toUpperCase(), detailsLeft + 6, y + 6, { width: col3Width - 10 });
       y += rowHeight;
+
     });
   } else {
     doc.rect(tableLeft, y, col1Width, rowHeight).stroke();
@@ -624,7 +626,8 @@ async function drawReceiptLayout(doc, transaction, qrImage, options = {}) {
   doc.text('Total Amount', tableLeft + 6, y + 6, { width: col1Width - 10 });
   doc.text(`PKR ${(transaction.amount || 0).toLocaleString()}`, amountLeft + 6, y + 6, { width: col2Width - 10 });
   doc.font('Helvetica-Oblique').fontSize(8.5).fillColor(COLORS.text);
-  doc.text(`${numberToWords(transaction.amount)}`, detailsLeft + 6, y + 6, { width: col3Width - 10 });
+  doc.text(`${numberToWords(transaction.amount).toUpperCase()}`, detailsLeft + 6, y + 6, { width: col3Width - 10 });
+
   y += rowHeight;
 
   // No extra gap before Agent Details
@@ -703,7 +706,8 @@ From today onward, the showroom will have full rights over the vehicle as purcha
   y += 3; // Reduced from 5
   y += drawSectionHeader(doc, 'Remarks', left, y, fullWidth);
   y += 3;
-  doc.font('Helvetica').fontSize(8).fillColor(COLORS.text).text(transaction.remarks || 'No additional remarks.', left + 5, y, { width: fullWidth - 10 });
+  doc.font('Helvetica').fontSize(8).fillColor(COLORS.text).text((transaction.remarks || 'No additional remarks.').toUpperCase(), left + 5, y, { width: fullWidth - 10 });
+
   y += 40;
   doc.fillColor('black');
 
