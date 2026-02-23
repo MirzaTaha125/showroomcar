@@ -14,19 +14,28 @@ export default function TokenReceipts() {
 
     const [list, setList] = useState([]);
     const [showrooms, setShowrooms] = useState([]);
+    const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [filterShowroom, setFilterShowroom] = useState('');
+    const [filterCreatedBy, setFilterCreatedBy] = useState('');
     const [filterDateFrom, setFilterDateFrom] = useState('');
     const [filterDateTo, setFilterDateTo] = useState('');
     const [pdfLoading, setPdfLoading] = useState(null);
+    const [exportLoading, setExportLoading] = useState(false);
     const [pdfPreviewUrl, setPdfPreviewUrl] = useState(null);
     const [pdfPreviewMeta, setPdfPreviewMeta] = useState(null);
     const [confirmDelete, setConfirmDelete] = useState({ open: false, id: null });
 
     const fetchList = () => {
         setError('');
-        tokenReceiptService.getAll(isAdmin ? filterShowroom : undefined)
+        const filters = {};
+        if (isAdmin && filterShowroom) filters.showroomId = filterShowroom;
+        if (isAdmin && filterCreatedBy) filters.createdBy = filterCreatedBy;
+        if (filterDateFrom) filters.dateFrom = filterDateFrom;
+        if (filterDateTo) filters.dateTo = filterDateTo;
+
+        tokenReceiptService.getAll(filters)
             .then((res) => setList(res.data))
             .catch((e) => setError(e.response?.data?.message || e.message || 'Failed to load token receipts'))
             .finally(() => setLoading(false));
@@ -34,7 +43,7 @@ export default function TokenReceipts() {
 
     useEffect(() => {
         fetchList();
-    }, [isAdmin, filterShowroom]);
+    }, [isAdmin, filterShowroom, filterCreatedBy, filterDateFrom, filterDateTo]);
 
     useEffect(() => {
         if (!isAdmin) return;
@@ -42,17 +51,38 @@ export default function TokenReceipts() {
         api.get('/showrooms')
             .then((res) => setShowrooms(res.data))
             .catch((e) => setError(e.response?.data?.message || e.message || 'Failed to load showrooms'));
+
+        api.get('/users')
+            .then((res) => setUsers(res.data))
+            .catch((e) => setError(e.response?.data?.message || e.message || 'Failed to load users'));
     }, [isAdmin]);
 
-    let filtered = list;
-    if (filterDateFrom || filterDateTo) {
-        filtered = list.filter((item) => {
-            const d = new Date(item.createdAt).getTime();
-            if (filterDateFrom && d < new Date(filterDateFrom).getTime()) return false;
-            if (filterDateTo && d > new Date(filterDateTo).getTime()) return false;
-            return true;
-        });
-    }
+    const handleExport = async () => {
+        setExportLoading(true);
+        setError('');
+        try {
+            const filters = {};
+            if (isAdmin && filterShowroom) filters.showroomId = filterShowroom;
+            if (isAdmin && filterCreatedBy) filters.createdBy = filterCreatedBy;
+            if (filterDateFrom) filters.dateFrom = filterDateFrom;
+            if (filterDateTo) filters.dateTo = filterDateTo;
+
+            const res = await tokenReceiptService.export(filters);
+            const blob = new Blob([res.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', 'token_receipts.xlsx');
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+        } catch (e) {
+            setError(e.response?.data?.message || 'Export failed.');
+        } finally {
+            setExportLoading(false);
+        }
+    };
 
     const onDeleteClick = (id) => setConfirmDelete({ open: true, id });
 
@@ -119,24 +149,74 @@ export default function TokenReceipts() {
                     <h1 className="page-title"><FileText size={28} className="page-title-icon" /> Token Receipts</h1>
                     <p className="page-subtitle">Manage token receipts for vehicle sales.</p>
                 </div>
+                <Link to="/token-receipts/new" className="btn btn-primary">
+                    <FileText size={18} /> New Token Receipt
+                </Link>
             </div>
-            <Link to="/token-receipts/new" className="btn btn-primary">
-                <FileText size={18} /> New Token Receipt
-            </Link>
 
 
             {
-                isAdmin && showrooms.length > 0 && (
+                isAdmin && (
                     <div className="car-account-list-filters card">
-                        <select value={filterShowroom} onChange={(e) => setFilterShowroom(e.target.value)} className="transactions-filter-select">
-                            <option value="">All showrooms</option>
-                            {showrooms.map((s) => <option key={s._id} value={s._id}>{s.name}</option>)}
-                        </select>
-                        <input type="date" value={filterDateFrom} onChange={(e) => setFilterDateFrom(e.target.value)} className="transactions-filter-select" />
-                        <input type="date" value={filterDateTo} onChange={(e) => setFilterDateTo(e.target.value)} className="transactions-filter-select" />
+                        {showrooms.length > 0 && (
+                            <select value={filterShowroom} onChange={(e) => setFilterShowroom(e.target.value)} className="transactions-filter-select">
+                                <option value="">All showrooms</option>
+                                {showrooms.map((s) => <option key={s._id} value={s._id}>{s.name}</option>)}
+                            </select>
+                        )}
+                        {users.length > 0 && (
+                            <select value={filterCreatedBy} onChange={(e) => setFilterCreatedBy(e.target.value)} className="transactions-filter-select">
+                                <option value="">All creators</option>
+                                {users.map((u) => <option key={u._id} value={u._id}>{u.name}</option>)}
+                            </select>
+                        )}
+                        <div className="flex-grow"></div>
+                        <button
+                            onClick={handleExport}
+                            className="btn btn-outline"
+                            disabled={exportLoading}
+                            style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                        >
+                            <FileDown size={18} />
+                            {exportLoading ? 'Exporting...' : 'Export Excel'}
+                        </button>
                     </div>
                 )
             }
+
+            <div className="car-account-list-filters card">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <span className="text-sm font-medium text-gray-600">Date Range:</span>
+                    <input type="date" value={filterDateFrom} onChange={(e) => setFilterDateFrom(e.target.value)} className="transactions-filter-select" />
+                    <span className="text-gray-400">to</span>
+                    <input type="date" value={filterDateTo} onChange={(e) => setFilterDateTo(e.target.value)} className="transactions-filter-select" />
+                    {(filterDateFrom || filterDateTo || (isAdmin && filterCreatedBy) || (isAdmin && filterShowroom)) && (
+                        <button
+                            onClick={() => {
+                                setFilterDateFrom('');
+                                setFilterDateTo('');
+                                setFilterCreatedBy('');
+                                setFilterShowroom('');
+                            }}
+                            className="btn btn-ghost btn-sm"
+                            title="Clear all filters"
+                        >
+                            <X size={16} />
+                        </button>
+                    )}
+                </div>
+                {!isAdmin && (
+                    <button
+                        onClick={handleExport}
+                        className="btn btn-outline"
+                        disabled={exportLoading}
+                        style={{ display: 'flex', alignItems: 'center', gap: '8px', marginLeft: 'auto' }}
+                    >
+                        <FileDown size={18} />
+                        {exportLoading ? 'Exporting...' : 'Export Excel'}
+                    </button>
+                )}
+            </div>
 
             {error && <div className="alert alert-error">{error}</div>}
 
@@ -184,10 +264,10 @@ export default function TokenReceipts() {
                         </thead>
 
                         <tbody>
-                            {filtered.length === 0 ? (
+                            {list.length === 0 ? (
                                 <tr><td colSpan={6} className="table-empty">No token receipts found.</td></tr>
                             ) : (
-                                filtered.map((item) => (
+                                list.map((item) => (
                                     <tr key={item._id}>
                                         <td>{format(new Date(item.createdAt), 'dd/MM/yyyy')}</td>
                                         <td>

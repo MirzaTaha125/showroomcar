@@ -1,6 +1,6 @@
 import React from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Building2, Users, Car, Receipt, FileText, Activity, LogOut } from 'lucide-react';
+import { LayoutDashboard, Building2, Users, Car, Receipt, FileText, Activity, LogOut, Percent } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import './Layout.css';
 
@@ -40,6 +40,9 @@ export default function Layout() {
           )}
           <NavLink to="/vehicles" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
             <Car size={18} /> Inventory
+          </NavLink>
+          <NavLink to="/agent-commissions" className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}>
+            <Percent size={18} /> Commissions
           </NavLink>
           {isAdmin && (
             <>

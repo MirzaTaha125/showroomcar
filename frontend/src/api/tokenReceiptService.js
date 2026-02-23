@@ -1,9 +1,8 @@
 import client from './client';
 
 export const tokenReceiptService = {
-    getAll: (showroomId) => {
-        const params = showroomId ? { showroomId } : {};
-        return client.get('/token-receipts', { params });
+    getAll: (filters = {}) => {
+        return client.get('/token-receipts', { params: filters });
     },
 
     getById: (id) => client.get(`/token-receipts/${id}`),
@@ -13,6 +12,10 @@ export const tokenReceiptService = {
     update: (id, data) => client.put(`/token-receipts/${id}`, data),
 
     delete: (id) => client.delete(`/token-receipts/${id}`),
+
+    export: (filters = {}) => {
+        return client.get('/token-receipts/export', { params: filters, responseType: 'blob' });
+    },
 
     getDownloadUrl: (id) => `${client.defaults.baseURL}/pdf/token-receipt/${id}`,
 };

@@ -4,25 +4,48 @@ import TokenReceipt from '../models/TokenReceipt.js';
 import { protect, restrictToShowroom } from '../middleware/auth.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { logActivity } from '../utils/activityLog.js';
+import { generateExcel } from '../utils/excel.js';
 
 const router = express.Router();
 
 router.use(protect);
 router.use(restrictToShowroom);
 
+const getFilter = (req) => {
+    const filter = {};
+    if (req.user.role === 'admin') {
+        if (req.query.showroomId) filter.showroom = req.query.showroomId;
+    } else {
+        filter.showroom = req.showroomId;
+    }
+
+    if (req.query.createdBy) filter.createdBy = req.query.createdBy;
+
+    if (req.query.dateFrom || req.query.dateTo) {
+        filter.createdAt = {};
+        if (req.query.dateFrom) filter.createdAt.$gte = new Date(req.query.dateFrom);
+        if (req.query.dateTo) {
+            const endOfDay = new Date(req.query.dateTo);
+            endOfDay.setHours(23, 59, 59, 999);
+            filter.createdAt.$lte = endOfDay;
+        }
+    }
+    return filter;
+};
+
 router.get(
     '/',
-    query('showroomId').optional().isMongoId(),
+    [
+        query('showroomId').optional().isMongoId(),
+        query('createdBy').optional().isMongoId(),
+        query('dateFrom').optional().isISO8601(),
+        query('dateTo').optional().isISO8601(),
+    ],
     asyncHandler(async (req, res) => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
 
-        const filter = {};
-        if (req.user.role === 'admin') {
-            if (req.query.showroomId) filter.showroom = req.query.showroomId;
-        } else {
-            filter.showroom = req.showroomId;
-        }
+        const filter = getFilter(req);
 
         const receipts = await TokenReceipt.find(filter)
             .populate('showroom', 'name address phone logoPath')
@@ -30,6 +53,86 @@ router.get(
             .sort({ createdAt: -1 })
             .lean();
         res.json(receipts);
+    })
+);
+
+router.get(
+    '/export',
+    [
+        query('showroomId').optional().isMongoId(),
+        query('createdBy').optional().isMongoId(),
+        query('dateFrom').optional().isISO8601(),
+        query('dateTo').optional().isISO8601(),
+    ],
+    asyncHandler(async (req, res) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+
+        const filter = getFilter(req);
+
+        const receipts = await TokenReceipt.find(filter)
+            .populate('showroom', 'name')
+            .populate('createdBy', 'name')
+            .sort({ createdAt: -1 })
+            .lean();
+
+        const columns = [
+            { header: 'Date', key: 'date', width: 12 },
+            { header: 'Receipt No', key: 'receiptNo', width: 15 },
+            { header: 'Vehicle', key: 'vehicle', width: 20 },
+            { header: 'Model', key: 'model', width: 10 },
+            { header: 'Year', key: 'year', width: 10 },
+            { header: 'Color', key: 'color', width: 10 },
+            { header: 'Registration No', key: 'regNo', width: 15 },
+            { header: 'Chassis No', key: 'chassis', width: 20 },
+            { header: 'Received From', key: 'from', width: 20 },
+            { header: 'Father Name', key: 'fatherName', width: 20 },
+            { header: 'Total Price', key: 'totalPrice', width: 15 },
+            { header: 'Amount Received', key: 'amountReceived', width: 15 },
+            { header: 'Remaining Balance', key: 'remaining', width: 15 },
+            { header: 'Purchaser Name', key: 'purchaser', width: 20 },
+            { header: 'Purchaser CNIC', key: 'purchaserCnic', width: 20 },
+            { header: 'Purchaser Mobile', key: 'purchaserMobile', width: 15 },
+            { header: 'Seller Name', key: 'sellerName', width: 20 },
+            { header: 'Seller Father Name', key: 'sellerFatherName', width: 20 },
+            { header: 'Seller CNIC', key: 'sellerCnic', width: 20 },
+            { header: 'Seller Mobile', key: 'sellerMobile', width: 15 },
+            { header: 'Seller Address', key: 'sellerAddress', width: 30 },
+            { header: 'Created By', key: 'createdBy', width: 15 },
+            { header: 'Note', key: 'note', width: 30 },
+        ];
+
+        const rows = receipts.map(r => ({
+            date: new Date(r.createdAt).toLocaleDateString('en-GB'),
+            receiptNo: r.receiptNumber || '-',
+            vehicle: `${r.make} ${r.model}`,
+            model: r.model,
+            year: r.yearOfManufacture || '-',
+            color: r.colour || '-',
+            regNo: r.registrationNo || '-',
+            chassis: r.onBehalfOfSellingCar,
+            from: r.fromMrMrs,
+            fatherName: r.fatherName || '-',
+            totalPrice: r.totalPrice,
+            amountReceived: r.amountReceived,
+            remaining: r.remainingBalance,
+            purchaser: r.purchaserName,
+            purchaserCnic: r.purchaserCnic || '-',
+            purchaserMobile: r.purchaserMobile || '-',
+            sellerName: r.sellerName || '-',
+            sellerFatherName: r.sellerFatherName || '-',
+            sellerCnic: r.sellerCnic || '-',
+            sellerMobile: r.sellerMobile || '-',
+            sellerAddress: r.sellerAddress || '-',
+            createdBy: r.createdBy?.name || 'Deleted User',
+            note: r.note || '-'
+        }));
+
+        const buffer = await generateExcel('Token Receipts', columns, rows);
+
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', 'attachment; filename=token_receipts.xlsx');
+        res.send(buffer);
     })
 );
 

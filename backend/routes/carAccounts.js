@@ -6,6 +6,8 @@ import Vehicle from '../models/Vehicle.js';
 import { protect, restrictToShowroom } from '../middleware/auth.js';
 import { logActivity } from '../utils/activityLog.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import { generateExcel } from '../utils/excel.js';
+import AgentCommission from '../models/AgentCommission.js';
 
 const router = express.Router();
 
@@ -21,23 +23,46 @@ function getNextReceiptNumber() {
 }
 
 
+const getFilter = (req) => {
+  const filter = {};
+  if (req.user.role === 'admin') {
+    if (req.query.showroomId) filter.showroom = req.query.showroomId;
+  } else {
+    filter.showroom = req.showroomId;
+  }
+  if (req.query.documentTitle) {
+    filter.documentTitle = req.query.documentTitle;
+  }
+  if (req.query.createdBy) filter.createdBy = req.query.createdBy;
+
+  if (req.query.dateFrom || req.query.dateTo) {
+    filter.createdAt = {};
+    if (req.query.dateFrom) filter.createdAt.$gte = new Date(req.query.dateFrom);
+    if (req.query.dateTo) {
+      const endOfDay = new Date(req.query.dateTo);
+      endOfDay.setHours(23, 59, 59, 999);
+      filter.createdAt.$lte = endOfDay;
+    }
+  }
+  return filter;
+};
+
 /** List car accounts (CarAccount model; each has transaction + vehicle) */
 router.get(
   '/',
-  query('showroomId').optional().isMongoId(),
-  query('documentTitle').optional().trim(),
+  [
+    query('showroomId').optional().isMongoId(),
+    query('documentTitle').optional().trim(),
+    query('createdBy').optional().isMongoId(),
+    query('dateFrom').optional().isISO8601(),
+    query('dateTo').optional().isISO8601(),
+  ],
   asyncHandler(async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
-    const filter = {};
-    if (req.user.role === 'admin') {
-      if (req.query.showroomId) filter.showroom = req.query.showroomId;
-    } else {
-      filter.showroom = req.showroomId;
-    }
-    if (req.query.documentTitle) {
-      filter.documentTitle = req.query.documentTitle;
-    }
+
+    const filter = getFilter(req);
+
     const carAccounts = await CarAccount.find(filter)
       .populate('showroom', 'name address phone ownerName logoPath')
       .populate('vehicle')
@@ -46,6 +71,95 @@ router.get(
       .sort({ createdAt: -1 })
       .lean();
     res.json(carAccounts);
+  })
+);
+
+/** Export car accounts to Excel */
+router.get(
+  '/export',
+  [
+    query('showroomId').optional().isMongoId(),
+    query('documentTitle').optional().trim(),
+    query('createdBy').optional().isMongoId(),
+    query('dateFrom').optional().isISO8601(),
+    query('dateTo').optional().isISO8601(),
+  ],
+  asyncHandler(async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+
+    const filter = getFilter(req);
+
+    const carAccounts = await CarAccount.find(filter)
+      .populate('showroom', 'name')
+      .populate('vehicle')
+      .populate('transaction')
+      .populate('createdBy', 'name')
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const mode = req.query.documentTitle || 'Delivery Order';
+    const fileName = mode.toLowerCase().replace(/ /g, '_') + 's.xlsx';
+
+    const columns = [
+      { header: 'Date', key: 'date', width: 12 },
+      { header: 'Receipt No', key: 'receiptNo', width: 15 },
+      { header: 'Vehicle', key: 'vehicle', width: 25 },
+      { header: 'Registration No', key: 'regNo', width: 15 },
+      { header: 'Engine No', key: 'engineNo', width: 20 },
+      { header: 'Chassis No', key: 'chassisNo', width: 20 },
+      { header: 'Color', key: 'color', width: 10 },
+      { header: 'Model Year', key: 'year', width: 10 },
+      { header: 'HP', key: 'hp', width: 8 },
+      { header: 'Amount', key: 'amount', width: 15 },
+      { header: 'Received', key: 'received', width: 15 },
+      { header: 'Balance', key: 'balance', width: 15 },
+      { header: 'Purchaser Name', key: 'purchaser', width: 20 },
+      { header: 'Purchaser Father', key: 'purchaserFather', width: 20 },
+      { header: 'Purchaser CNIC', key: 'purchaserCnic', width: 20 },
+      { header: 'Purchaser Phone', key: 'purchaserPhone', width: 15 },
+      { header: 'Purchaser Address', key: 'purchaserAddress', width: 30 },
+      { header: 'Owner Name', key: 'ownerName', width: 20 },
+      { header: 'Owner CNIC', key: 'ownerCnic', width: 20 },
+      { header: 'Owner Phone', key: 'ownerPhone', width: 15 },
+      { header: 'Seller Name', key: 'sellerName', width: 20 },
+      { header: 'Agent Name', key: 'agentName', width: 20 },
+      { header: 'Created By', key: 'createdBy', width: 15 },
+      { header: 'Notes', key: 'notes', width: 30 },
+    ];
+
+    const rows = carAccounts.map(doc => ({
+      date: new Date(doc.createdAt).toLocaleDateString('en-GB'),
+      receiptNo: doc.receiptNumber || '-',
+      vehicle: doc.vehicle ? `${doc.vehicle.make} ${doc.vehicle.model}` : `${doc.make} ${doc.model}`,
+      regNo: doc.vehicle ? (doc.vehicle.registrationNo || '-') : (doc.registrationNo || '-'),
+      engineNo: doc.vehicle ? doc.vehicle.engineNo : doc.engineNo,
+      chassisNo: doc.vehicle ? doc.vehicle.chassisNo : doc.chassisNo,
+      color: doc.vehicle ? (doc.vehicle.color || '-') : (doc.color || '-'),
+      year: doc.vehicle ? (doc.vehicle.year || '-') : (doc.yearOfManufacturing || '-'),
+      hp: doc.vehicle ? (doc.vehicle.hp || '-') : (doc.hp || '-'),
+      amount: doc.transaction?.amount || 0,
+      received: doc.totalAmountReceived || 0,
+      balance: doc.balance || 0,
+      purchaser: doc.purchaserName || '-',
+      purchaserFather: doc.purchaserFatherName || '-',
+      purchaserCnic: doc.purchaserCnic || '-',
+      purchaserPhone: doc.purchaserPhone || '-',
+      purchaserAddress: doc.purchaserAddress || '-',
+      ownerName: doc.ownerName || '-',
+      ownerCnic: doc.ownerCnic || '-',
+      ownerPhone: doc.ownerTelephone || doc.ownerPhone || '-',
+      sellerName: doc.sellerName || '-',
+      agentName: doc.agentName || '-',
+      createdBy: doc.createdBy?.name || 'Deleted User',
+      notes: doc.notes || doc.remarks || '-'
+    }));
+
+    const buffer = await generateExcel(mode + 's', columns, rows);
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename=${fileName}`);
+    res.send(buffer);
   })
 );
 
@@ -316,6 +430,27 @@ router.post(
         showroomId,
         metadata: { receiptNumber },
       });
+
+      // Auto-Commission for Delivery Orders (0.5%)
+      if (docTitle === 'VEHICLE DELIVERY ORDER') {
+        const commissionAmount = amount * 0.005;
+        try {
+          await AgentCommission.create({
+            showroom: showroomId,
+            user: req.user._id,
+            carAccount: carAccount._id,
+            baseAmount: amount,
+            amount: commissionAmount,
+            percentage: 0.5,
+            status: 'pending',
+            date: transactionDate,
+          });
+          console.log(`[AgentCommission] Created auto-commission for user ${req.user._id} on carAccount ${carAccount._id}`);
+        } catch (commErr) {
+          console.error('[AgentCommission] Failed to create auto-commission:', commErr);
+          // We don't fail the DO creation if commission creation fails, just log it.
+        }
+      }
 
       const out = await CarAccount.findById(carAccount._id)
         .populate('showroom', 'name address phone ownerName logoPath')

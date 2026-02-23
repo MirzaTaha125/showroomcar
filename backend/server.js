@@ -31,6 +31,7 @@ import verifyRoutes from './routes/verify.js';
 import statsRoutes from './routes/stats.js';
 import activityLogRoutes from './routes/activityLogs.js';
 import tokenReceiptRoutes from './routes/tokenReceipts.js';
+import agentCommissionRoutes from './routes/agentCommissions.js';
 
 // Validate environment variables
 validateEnv();
@@ -184,6 +185,7 @@ app.use('/api/verify-sale', verifyRoutes);
 app.use('/api/stats', requireDb, statsRoutes);
 app.use('/api/activity-logs', requireDb, activityLogRoutes);
 app.use('/api/token-receipts', requireDb, tokenReceiptRoutes);
+app.use('/api/agent-commissions', requireDb, agentCommissionRoutes);
 
 // 404 handler
 app.use((req, res) => res.status(404).json({ message: 'Endpoint not found' }));

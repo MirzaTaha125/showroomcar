@@ -16,6 +16,7 @@ import ActivityLogs from './pages/ActivityLogs';
 import Verify from './pages/Verify';
 import TokenReceipts from './pages/TokenReceipts';
 import TokenReceiptForm from './pages/TokenReceiptForm';
+import AgentCommissions from './pages/AgentCommissions';
 
 function PrivateRoute({ children, adminOnly }) {
   const { user, loading } = useAuth();
@@ -55,6 +56,7 @@ function AppRoutes() {
         <Route path="vehicles" element={<Vehicles />} />
         <Route path="transactions" element={<PrivateRoute adminOnly><Transactions /></PrivateRoute>} />
         <Route path="activity-logs" element={<PrivateRoute adminOnly><ActivityLogs /></PrivateRoute>} />
+        <Route path="agent-commissions" element={<AgentCommissions />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

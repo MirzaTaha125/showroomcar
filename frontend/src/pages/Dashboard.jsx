@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { LayoutDashboard, Building2, Car, CarFront, Package, Receipt, FileText, Users, TrendingUp, Activity, ArrowRight, Search } from 'lucide-react';
+import { LayoutDashboard, Building2, Car, CarFront, Package, Receipt, FileText, Users, TrendingUp, Activity, ArrowRight, Search, Percent } from 'lucide-react';
 import { format } from 'date-fns';
 import {
   LineChart,
@@ -88,6 +88,7 @@ export default function Dashboard() {
               <Link to="/showrooms">Showrooms</Link>
               <Link to="/vehicles">Inventory</Link>
               <Link to="/users">Users</Link>
+              <Link to="/agent-commissions">Commissions</Link>
             </nav>
           </div>
 
@@ -182,56 +183,77 @@ export default function Dashboard() {
         </>
       ) : (
         <div className="ctrl">
-          <div className="ctrl-bg" aria-hidden="true">
-            <div className="ctrl-bg-gradient" />
-            <div className="ctrl-bg-grid" />
-            <div className="ctrl-bg-glow ctrl-bg-glow--1" />
-            <div className="ctrl-bg-glow ctrl-bg-glow--2" />
+          <div className="page-header">
+            <h1 className="page-title"><LayoutDashboard size={28} className="page-title-icon" /> Dashboard</h1>
+            <p className="page-subtitle">Quick access to common showroom tasks.</p>
           </div>
-          <div className="ctrl-inner">
-            <header className="ctrl-hero">
-              <span className="ctrl-hero-badge">Showroom control</span>
-              <h1 className="ctrl-hero-title">Your command center</h1>
-              <p className="ctrl-hero-sub">Create contracts, manage inventory, and keep everything in one place.</p>
-            </header>
-            <div className="ctrl-actions">
-              <Link to="/car-account/new" className="ctrl-card ctrl-card--primary ctrl-card--accent-a" target="_blank">
-                <span className="ctrl-card-glow" aria-hidden="true" />
-                <span className="ctrl-card-icon">
-                  <FileText size={32} strokeWidth={1.75} />
-                </span>
-                <div className="ctrl-card-content">
-                  <h2 className="ctrl-card-title">New Delivery Order</h2>
-                  <p className="ctrl-card-desc">Create a sale contract with vehicle, seller & purchaser details.</p>
-                  <span className="ctrl-card-cta">Create contract <ArrowRight size={18} /></span>
-                </div>
-              </Link>
-              <Link to="/vehicles" className="ctrl-card ctrl-card--primary ctrl-card--accent-b">
-                <span className="ctrl-card-glow" aria-hidden="true" />
-                <span className="ctrl-card-icon">
-                  <Car size={32} strokeWidth={1.75} />
-                </span>
-                <div className="ctrl-card-content">
-                  <h2 className="ctrl-card-title">Inventory</h2>
-                  <p className="ctrl-card-desc">Add vehicles, edit details, and manage your showroom stock.</p>
-                  <span className="ctrl-card-cta">Manage stock <ArrowRight size={18} /></span>
-                </div>
-              </Link>
-            </div>
-            <div className="ctrl-stats">
-              <Link to="/car-account" className="ctrl-stat">
-                <span className="ctrl-stat-label">Delivery orders</span>
-                <span className="ctrl-stat-value">{counts.sales ?? 0}</span>
-                <span className="ctrl-stat-meta">Sale contracts</span>
-              </Link>
-              <Link to="/vehicles" className="ctrl-stat">
-                <span className="ctrl-stat-label">Inventory</span>
-                <span className="ctrl-stat-value">{counts.vehicles ?? 0}</span>
-                <span className="ctrl-stat-meta">{counts.available ?? 0} available</span>
-              </Link>
-            </div>
+
+          <div className="ctrl-actions">
+            <Link to="/token-receipts/new" className="ctrl-card ctrl-card--simple">
+              <div className="ctrl-card-icon ctrl-card-icon--red"><Receipt size={28} /></div>
+              <div className="ctrl-card-content">
+                <h2 className="ctrl-card-title">New Token Receipt</h2>
+                <h3 className="ctrl-card-urdu">ٹوکن رسید</h3>
+                <p className="ctrl-card-desc">Secure vehicle booking</p>
+              </div>
+              <ArrowRight size={20} className="ctrl-card-arrow" />
+            </Link>
+
+            <Link to="/delivery-orders/new" className="ctrl-card ctrl-card--simple" target="_blank">
+              <div className="ctrl-card-icon ctrl-card-icon--red"><FileText size={28} /></div>
+              <div className="ctrl-card-content">
+                <h2 className="ctrl-card-title">New Delivery Order</h2>
+                <h3 className="ctrl-card-urdu">ڈیلیوری آرڈر</h3>
+                <p className="ctrl-card-desc">Vehicle sale contract</p>
+              </div>
+              <ArrowRight size={20} className="ctrl-card-arrow" />
+            </Link>
+
+            <Link to="/purchase-orders/new" className="ctrl-card ctrl-card--simple">
+              <div className="ctrl-card-icon ctrl-card-icon--green"><Package size={28} /></div>
+              <div className="ctrl-card-content">
+                <h2 className="ctrl-card-title">New Purchase Order</h2>
+                <h3 className="ctrl-card-urdu">پرچیز آرڈر</h3>
+                <p className="ctrl-card-desc">Vehicle purchase contract</p>
+              </div>
+              <ArrowRight size={20} className="ctrl-card-arrow" />
+            </Link>
+
+            <Link to="/vehicles" className="ctrl-card ctrl-card--simple">
+              <div className="ctrl-card-icon ctrl-card-icon--blue"><Car size={28} /></div>
+              <div className="ctrl-card-content">
+                <h2 className="ctrl-card-title">Manage Inventory</h2>
+                <h3 className="ctrl-card-urdu">انوینٹری</h3>
+                <p className="ctrl-card-desc">Showroom vehicle stock</p>
+              </div>
+              <ArrowRight size={20} className="ctrl-card-arrow" />
+            </Link>
+
+            <Link to="/agent-commissions" className="ctrl-card ctrl-card--simple">
+              <div className="ctrl-card-icon ctrl-card-icon--purple"><Percent size={28} /></div>
+              <div className="ctrl-card-content">
+                <h2 className="ctrl-card-title">My Commissions</h2>
+                <h3 className="ctrl-card-urdu">کمیشن</h3>
+                <p className="ctrl-card-desc">Track your earnings</p>
+              </div>
+              <ArrowRight size={20} className="ctrl-card-arrow" />
+            </Link>
+          </div>
+
+
+
+          <div className="ctrl-stats-simple">
+            <Link to="/delivery-orders" className="ctrl-stat-mini">
+              <span className="ctrl-stat-mini-label">Orders</span>
+              <span className="ctrl-stat-mini-value">{counts.sales ?? 0}</span>
+            </Link>
+            <Link to="/vehicles" className="ctrl-stat-mini">
+              <span className="ctrl-stat-mini-label">Inventory</span>
+              <span className="ctrl-stat-mini-value">{counts.vehicles ?? 0}</span>
+            </Link>
           </div>
         </div>
+
       )}
     </div>
   );

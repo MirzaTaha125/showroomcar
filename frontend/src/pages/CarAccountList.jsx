@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { FileText, Pencil, Trash2, FileDown, Eye, X } from 'lucide-react';
 import { format } from 'date-fns';
 import api, { getNetworkErrorMessage } from '../api/client';
+import { carAccountService } from '../api/carAccountService';
 import { useAuth } from '../context/AuthContext';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import '../components/ui.css';
@@ -23,11 +24,14 @@ export default function CarAccountList({ type, basePath }) {
 
   const [list, setList] = useState([]);
   const [showrooms, setShowrooms] = useState([]);
+  const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [filterShowroom, setFilterShowroom] = useState('');
+  const [filterCreatedBy, setFilterCreatedBy] = useState('');
   const [filterDateFrom, setFilterDateFrom] = useState('');
   const [filterDateTo, setFilterDateTo] = useState('');
+  const [exportLoading, setExportLoading] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(null);
   const [pdfPreviewUrl, setPdfPreviewUrl] = useState(null);
   const [pdfPreviewMeta, setPdfPreviewMeta] = useState(null);
@@ -35,29 +39,26 @@ export default function CarAccountList({ type, basePath }) {
   const [confirmDelete, setConfirmDelete] = useState({ open: false, id: null });
 
   const fetchList = () => {
+    setLoading(true);
     setError('');
-    const params = {};
-    if (isAdmin && filterShowroom) params.showroomId = filterShowroom;
-    api.get('/car-accounts', { params })
+    const filters = {};
+    if (isAdmin && filterShowroom) filters.showroomId = filterShowroom;
+    if (isAdmin && filterCreatedBy) filters.createdBy = filterCreatedBy;
+    if (filterDateFrom) filters.dateFrom = filterDateFrom;
+    if (filterDateTo) filters.dateTo = filterDateTo;
+    if (type) filters.documentTitle = type;
+
+    carAccountService.getAll(filters)
       .then((res) => {
-        let data = res.data;
-        if (type) {
-          if (type === 'VEHICLE TOKEN RECEIPT') {
-            // Show both new Token Receipts and old Sale Receipts
-            data = data.filter(item => item.documentTitle === 'VEHICLE TOKEN RECEIPT' || item.documentTitle === 'VEHICLE SALE RECEIPT');
-          } else {
-            data = data.filter(item => item.documentTitle === type);
-          }
-        }
-        setList(data);
+        setList(res.data);
       })
-      .catch((e) => setError(e.response?.data?.message || e.message || 'Failed to load delivery orders'))
+      .catch((e) => setError(e.response?.data?.message || e.message || 'Failed to load list'))
       .finally(() => setLoading(false));
   };
 
   useEffect(() => {
     fetchList();
-  }, [isAdmin, filterShowroom, type]);
+  }, [isAdmin, filterShowroom, filterCreatedBy, filterDateFrom, filterDateTo, type]);
 
   useEffect(() => {
     if (!isAdmin) return;
@@ -65,24 +66,41 @@ export default function CarAccountList({ type, basePath }) {
     api.get('/showrooms')
       .then((res) => setShowrooms(res.data))
       .catch((e) => setError(e.response?.data?.message || e.message || 'Failed to load showrooms'));
+
+    api.get('/users')
+      .then((res) => setUsers(res.data))
+      .catch((e) => setError(e.response?.data?.message || e.message || 'Failed to load users'));
   }, [isAdmin]);
 
-  let filtered = list;
-  if (filterDateFrom || filterDateTo) {
-    filtered = list.filter((item) => {
-      const d = (item.transaction?.transactionDate || item.transactionDate) ? new Date(item.transaction?.transactionDate || item.transactionDate).getTime() : 0;
-      if (filterDateFrom && d < new Date(filterDateFrom).getTime()) return false;
-      if (filterDateTo && d > new Date(filterDateTo).getTime()) return false;
-      return true;
-    });
-  }
+  const handleExport = async () => {
+    setExportLoading(true);
+    setError('');
+    try {
+      const filters = {};
+      if (isAdmin && filterShowroom) filters.showroomId = filterShowroom;
+      if (isAdmin && filterCreatedBy) filters.createdBy = filterCreatedBy;
+      if (filterDateFrom) filters.dateFrom = filterDateFrom;
+      if (filterDateTo) filters.dateTo = filterDateTo;
+      if (type) filters.documentTitle = type;
 
-  // Newest first sorting
-  filtered = [...filtered].sort((a, b) => {
-    const dateA = new Date(a.transaction?.transactionDate || a.transactionDate || a.createdAt).getTime();
-    const dateB = new Date(b.transaction?.transactionDate || b.transactionDate || b.createdAt).getTime();
-    return dateB - dateA;
-  });
+      const res = await carAccountService.export(filters);
+      const blob = new Blob([res.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      const fileName = (type || 'Delivery Order').toLowerCase().replace(/ /g, '_') + 's.xlsx';
+      link.setAttribute('download', fileName);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (e) {
+      setError(e.response?.data?.message || 'Export failed.');
+    } finally {
+      setExportLoading(false);
+    }
+  };
+
 
   const onDeleteClick = (id) => setConfirmDelete({ open: true, id });
 
@@ -169,16 +187,68 @@ export default function CarAccountList({ type, basePath }) {
       </div>
 
 
-      {isAdmin && showrooms.length > 0 && (
-        <div className="car-account-list-filters card">
-          <select value={filterShowroom} onChange={(e) => setFilterShowroom(e.target.value)} className="transactions-filter-select">
-            <option value="">All showrooms</option>
-            {showrooms.map((s) => <option key={s._id} value={s._id}>{s.name}</option>)}
-          </select>
-          <input type="date" value={filterDateFrom} onChange={(e) => setFilterDateFrom(e.target.value)} className="transactions-filter-select" placeholder="From" />
-          <input type="date" value={filterDateTo} onChange={(e) => setFilterDateTo(e.target.value)} className="transactions-filter-select" placeholder="To" />
+      {
+        isAdmin && (
+          <div className="car-account-list-filters card">
+            {showrooms.length > 0 && (
+              <select value={filterShowroom} onChange={(e) => setFilterShowroom(e.target.value)} className="transactions-filter-select">
+                <option value="">All showrooms</option>
+                {showrooms.map((s) => <option key={s._id} value={s._id}>{s.name}</option>)}
+              </select>
+            )}
+            {users.length > 0 && (
+              <select value={filterCreatedBy} onChange={(e) => setFilterCreatedBy(e.target.value)} className="transactions-filter-select">
+                <option value="">All creators</option>
+                {users.map((u) => <option key={u._id} value={u._id}>{u.name}</option>)}
+              </select>
+            )}
+            <div className="flex-grow"></div>
+            <button
+              onClick={handleExport}
+              className="btn btn-outline"
+              disabled={exportLoading}
+              style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+            >
+              <FileDown size={18} />
+              {exportLoading ? 'Exporting...' : 'Export Excel'}
+            </button>
+          </div>
+        )
+      }
+
+      <div className="car-account-list-filters card">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <span className="text-sm font-medium text-gray-600">Date Range:</span>
+          <input type="date" value={filterDateFrom} onChange={(e) => setFilterDateFrom(e.target.value)} className="transactions-filter-select" />
+          <span className="text-gray-400">to</span>
+          <input type="date" value={filterDateTo} onChange={(e) => setFilterDateTo(e.target.value)} className="transactions-filter-select" />
+          {(filterDateFrom || filterDateTo || (isAdmin && filterCreatedBy) || (isAdmin && filterShowroom)) && (
+            <button
+              onClick={() => {
+                setFilterDateFrom('');
+                setFilterDateTo('');
+                setFilterCreatedBy('');
+                setFilterShowroom('');
+              }}
+              className="btn btn-ghost btn-sm"
+              title="Clear all filters"
+            >
+              <X size={16} />
+            </button>
+          )}
         </div>
-      )}
+        {!isAdmin && (
+          <button
+            onClick={handleExport}
+            className="btn btn-outline"
+            disabled={exportLoading}
+            style={{ display: 'flex', alignItems: 'center', gap: '8px', marginLeft: 'auto' }}
+          >
+            <FileDown size={18} />
+            {exportLoading ? 'Exporting...' : 'Export Excel'}
+          </button>
+        )}
+      </div>
 
       {error && <div className="alert alert-error">{error}</div>}
 
@@ -225,10 +295,10 @@ export default function CarAccountList({ type, basePath }) {
               </tr>
             </thead>
             <tbody>
-              {filtered.length === 0 ? (
-                <tr><td colSpan={6} className="table-empty">No delivery orders yet. Create one with &quot;New Delivery Order&quot;.</td></tr>
+              {list.length === 0 ? (
+                <tr><td colSpan={8} className="table-empty">No results found.</td></tr>
               ) : (
-                filtered.map((item) => {
+                list.map((item) => {
                   const txId = item.transaction?._id || item._id;
                   const txDate = item.transaction?.transactionDate || item.transactionDate;
                   const amount = item.transaction?.amount ?? item.amount;
