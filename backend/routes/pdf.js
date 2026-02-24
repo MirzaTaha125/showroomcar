@@ -148,7 +148,7 @@ router.get(
 
     const receipt = await TokenReceipt.findById(req.params.id)
       .populate('showroom', 'name address phone logoPath')
-      .populate('addedBy', 'name email');
+      .populate('createdBy', 'name email');
 
     if (!receipt) return res.status(404).json({ message: 'Token receipt not found.' });
 

@@ -27,9 +27,10 @@ function numberToWords(num) {
         if (n < 1000) return ones[Math.floor(n / 100)] + ' Hundred' + (n % 100 !== 0 ? ' and ' + convert(n % 100) : '');
         if (n < 100000) return convert(Math.floor(n / 1000)) + ' Thousand' + (n % 1000 !== 0 ? ' ' + convert(n % 1000) : '');
         if (n < 10000000) return convert(Math.floor(n / 100000)) + ' Lakh' + (n % 100000 !== 0 ? ' ' + convert(n % 100000) : '');
-        return convert(Math.floor(num / 10000000)) + ' Crore' + (num % 10000000 !== 0 ? ' ' + convert(num % 10000000) : '');
+        return convert(Math.floor(n / 10000000)) + ' Crore' + (n % 10000000 !== 0 ? ' ' + convert(n % 10000000) : '');
     };
-    return convert(Math.floor(num)).trim() + ' Only';
+    const result = convert(Math.floor(num));
+    return result.trim() + ' Only';
 }
 
 function formatCnic(cnic) {
@@ -108,7 +109,20 @@ async function loadLogoBuffer(logoPath) {
 async function drawTokenReceiptLayout(doc, receipt, options = {}) {
     const { watermark } = options;
     const s = receipt.showroom || {};
-    const txDate = new Date(receipt.createdAt).toLocaleDateString('en-GB');
+
+    // Robust date formatting
+    const fmt = (d) => {
+        if (d == null || d === '') return '';
+        const date = new Date(d);
+        if (Number.isNaN(date.getTime())) return '';
+        try {
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = date.getFullYear();
+            return `${day}/${month}/${year}`;
+        } catch (_) { return ''; }
+    };
+    const txDate = fmt(receipt.createdAt) || fmt(new Date());
 
     if (watermark) drawWatermark(doc, watermark);
     doc.opacity(1).fillColor('black');
@@ -149,7 +163,8 @@ async function drawTokenReceiptLayout(doc, receipt, options = {}) {
     drawField(doc, 'Receipt Date:', txDate, left, y, 250, labelW);
     y += 22;
 
-    drawField(doc, 'Token Received:', `PKR ${receipt.amountReceived.toLocaleString()}`, left, y, fullWidth, labelW, { valueBold: true });
+    const amtStr = (receipt.amountReceived != null ? receipt.amountReceived.toLocaleString() : '0');
+    drawField(doc, 'Token Received:', `PKR ${amtStr}`, left, y, fullWidth, labelW, { valueBold: true });
     y += 15;
     doc.font('Helvetica-Oblique').fontSize(8).text(`(${numberToWords(receipt.amountReceived).toUpperCase()})`, left + labelW + 5, y);
     y += 20;
@@ -175,8 +190,10 @@ async function drawTokenReceiptLayout(doc, receipt, options = {}) {
     drawField(doc, 'Colour:', receipt.colour, left + 180, y, 160, 40, { underline: true });
     y += 28;
 
-    drawField(doc, 'Total Price:', `PKR ${receipt.totalPrice.toLocaleString()}`, left, y, 250, labelW, { underline: true });
-    drawField(doc, 'Remaining Balance:', `PKR ${receipt.remainingBalance.toLocaleString()}`, left + 265, y, 250, 115, { valueBold: true, underline: true });
+    const totalStr = (receipt.totalPrice != null ? receipt.totalPrice.toLocaleString() : '0');
+    const balStr = (receipt.remainingBalance != null ? receipt.remainingBalance.toLocaleString() : '0');
+    drawField(doc, 'Total Price:', `PKR ${totalStr}`, left, y, 250, labelW, { underline: true });
+    drawField(doc, 'Remaining Balance:', `PKR ${balStr}`, left + 265, y, 250, 115, { valueBold: true, underline: true });
     y += 28;
 
     if (receipt.note) {
