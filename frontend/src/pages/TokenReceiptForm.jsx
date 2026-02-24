@@ -34,8 +34,10 @@ export default function TokenReceiptForm() {
             remainingBalance: '',
             note: '',
             purchaserName: '',
+            purchaserFatherName: '',
             purchaserCnic: '',
             purchaserMobile: '',
+            purchaserAddress: '',
             sellerName: '',
             sellerFatherName: '',
             sellerCnic: '',
@@ -191,11 +193,13 @@ export default function TokenReceiptForm() {
                     <section className="car-account-section car-account-dealers-col">
                         <h2>Purchaser Details</h2>
                         <div className="form-group"><label>Purchaser Name *</label><input {...register('purchaserName', { required: 'Required' })} /></div>
+                        <div className="form-group"><label>S/O</label><input {...register('purchaserFatherName')} /></div>
                         <div className="form-group">
                             <label>Purchaser CNIC</label>
                             <input {...register('purchaserCnic', { onChange: (e) => e.target.value = formatCnic(e.target.value) })} maxLength={15} placeholder="12345-1234567-1" />
                         </div>
                         <div className="form-group"><label>Purchaser Mobile</label><input {...register('purchaserMobile')} /></div>
+                        <div className="form-group"><label>Purchaser Address</label><input {...register('purchaserAddress')} /></div>
                     </section>
 
                     <section className="car-account-section car-account-dealers-col">

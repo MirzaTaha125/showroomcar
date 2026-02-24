@@ -309,27 +309,27 @@ export default function CarAccountList({ type, basePath }) {
                   return (
                     <tr key={item._id}>
                       <td>
-                        <strong>{item.receiptNumber || '—'}</strong>
+                        <strong>{(item.receiptNumber || '—').toUpperCase()}</strong>
                         <div className="table-muted">{txDate ? format(new Date(txDate), 'dd/MM/yyyy') : '—'}</div>
                       </td>
                       <td>
-                        <span>{vehicleLabel || '—'}</span>
-                        {vehicleReg && <div className="table-muted">{vehicleReg}</div>}
+                        <span>{(vehicleLabel || '—').toUpperCase()}</span>
+                        {vehicleReg && <div className="table-muted">{vehicleReg.toUpperCase()}</div>}
                       </td>
-                      <td>{item.purchaserName}</td>
-                      <td>{item.ownerName || item.showroom?.ownerName || item.showroom?.name || '—'}</td>
+                      <td>{item.purchaserName?.toUpperCase()}</td>
+                      <td>{(item.ownerName || item.showroom?.ownerName || item.showroom?.name || '—').toUpperCase()}</td>
                       <td>PKR {(amount ?? 0).toLocaleString()}</td>
                       <td>{item.transaction?.pdfCount || 0}</td>
-                      <td>{item.createdBy?.name || '—'}</td>
+                      <td>{(item.createdBy?.name || '—').toUpperCase()}</td>
                       <td>
 
                         <div className="table-actions">
-                          <button type="button" className="btn btn-primary btn-sm" title="Preview PDF in browser" onClick={() => openPdfPreview(txId, 'receipt')} disabled={pdfPreviewLoading !== null}>{pdfPreviewLoading === `${txId}-receipt` ? '...' : <Eye size={14} />} View PDF</button>
-                          <button type="button" className="btn btn-secondary btn-sm" title="Download PDF" onClick={() => downloadPdf(txId, 'receipt')} disabled={pdfLoading !== null}>{pdfLoading === `${txId}-receipt` ? '...' : <FileDown size={14} />} Download</button>
+                          <button type="button" className="btn btn-primary btn-sm" title="View PDF" onClick={() => openPdfPreview(txId, 'receipt')} disabled={pdfPreviewLoading !== null}>{pdfPreviewLoading === `${txId}-receipt` ? '...' : <Eye size={14} />}</button>
+                          <button type="button" className="btn btn-secondary btn-sm" title="Download PDF" onClick={() => downloadPdf(txId, 'receipt')} disabled={pdfLoading !== null}>{pdfLoading === `${txId}-receipt` ? '...' : <FileDown size={14} />}</button>
                           {!isController && (
                             canEditOrDelete(item, isAdmin) ? (
                               <>
-                                <Link to={`${basePath || '/car-account'}/edit/${item._id}`} className="btn btn-secondary btn-sm" title="Edit contract"><Pencil size={14} /> Edit</Link>
+                                <Link to={`${basePath || '/car-account'}/edit/${item._id}`} className="btn btn-secondary btn-sm" title="Edit"><Pencil size={14} /></Link>
                                 <button type="button" className="btn btn-danger btn-sm" onClick={() => onDeleteClick(item._id)} title="Delete"><Trash2 size={14} /></button>
                               </>
                             ) : (

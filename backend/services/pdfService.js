@@ -183,13 +183,13 @@ function formatCnic(cnic) {
 
 /** Draws a professional header with black text and a subtle line. */
 function drawSectionHeader(doc, title, x, y, width) {
-  doc.fontSize(10).font('Helvetica-Bold').fillColor(COLORS.text)
+  doc.fontSize(9).font('Helvetica-Bold').fillColor(COLORS.text)
     .text(title.toUpperCase(), x, y);
   const textHeight = doc.heightOfString(title.toUpperCase());
-  const lineY = y + textHeight + 2;
-  doc.lineWidth(0.8).strokeColor(COLORS.text).moveTo(x, lineY).lineTo(x + width, lineY).stroke();
+  const lineY = y + textHeight + 1.5;
+  doc.lineWidth(0.6).strokeColor(COLORS.text).moveTo(x, lineY).lineTo(x + width, lineY).stroke();
   doc.lineWidth(1);
-  return textHeight + 5; // Balanced header height
+  return textHeight + 4; // Balanced header height
 }
 
 /**
@@ -276,22 +276,22 @@ async function drawReceiptLayout(doc, transaction, qrImage, options = {}) {
   const logoImage = logoImageOption ?? null;
 
   if (logoImage && hasShowroom) {
-    const logoWidth = 180;
-    const logoHeight = 80;
+    const logoWidth = 170;
+    const logoHeight = 75;
     const logoX = centerX - logoWidth / 2;
     try {
       doc.image(logoImage, logoX, y, { width: logoWidth, height: logoHeight, fit: [logoWidth, logoHeight] });
     } catch (_) { }
-    y += logoHeight + 0; // Removed gap completely
+    y += logoHeight - 2; // Removed gap completely
   } else if (hasShowroom) {
-    doc.fontSize(18).font('Helvetica-Bold').fillColor('black').text(showroomName || 'Showroom', left, y, { width: fullWidth, align: 'center' });
-    doc.fontSize(8).font('Helvetica').fillColor(COLORS.textMuted).text(oneLine(showroomAddress, 70), left, y + 18, { width: fullWidth, align: 'center' });
-    doc.fontSize(8).text(showroomPhone ? `Tel: ${showroomPhone}` : '', left, y + 30, { width: fullWidth, align: 'center' });
-    y += 50;
+    doc.fontSize(17).font('Helvetica-Bold').fillColor('black').text(showroomName || 'Showroom', left, y, { width: fullWidth, align: 'center' });
+    doc.fontSize(7).font('Helvetica').fillColor(COLORS.textMuted).text(oneLine(showroomAddress, 80), left, y + 17, { width: fullWidth, align: 'center' });
+    doc.fontSize(7).text(showroomPhone ? `Tel: ${showroomPhone}` : '', left, y + 28, { width: fullWidth, align: 'center' });
+    y += 45;
   } else {
-    doc.fontSize(18).font('Helvetica-Bold').fillColor('black').text(showroomName || 'Showroom', left, y, { width: fullWidth, align: 'center' });
-    doc.fontSize(8).font('Helvetica').fillColor(COLORS.textMuted).text(oneLine(showroomAddress, 70), left, y + 18, { width: fullWidth, align: 'center' });
-    y += 50;
+    doc.fontSize(17).font('Helvetica-Bold').fillColor('black').text(showroomName || 'Showroom', left, y, { width: fullWidth, align: 'center' });
+    doc.fontSize(7).font('Helvetica').fillColor(COLORS.textMuted).text(oneLine(showroomAddress, 80), left, y + 17, { width: fullWidth, align: 'center' });
+    y += 45;
   }
 
   // Receipt No & Date removed per user request
@@ -304,26 +304,26 @@ async function drawReceiptLayout(doc, transaction, qrImage, options = {}) {
     doc.save();
     doc.rect(0, y, pageWidth, 20).fill(COLORS.danger);
     doc.restore();
-    doc.fillColor('white').fontSize(11).font('Helvetica-Bold')
+    doc.fillColor('white').fontSize(10).font('Helvetica-Bold')
       .text(transaction.documentTitle || 'VEHICLE DELIVERY ORDER', 0, y + 5, { align: 'center', width: pageWidth });
     doc.fillColor('black');
-    y += 30;
+    y += 28;
   } else {
     // --- 2. TITLE TEXT (above blue banner) ---
     y = Math.max(y, 80);
-    doc.fillColor('black').fontSize(11).font('Helvetica-Bold')
+    doc.fillColor('black').fontSize(10).font('Helvetica-Bold')
       .text(transaction.documentTitle || 'VEHICLE DELIVERY ORDER', left, y, { align: 'center', width: fullWidth });
-    y += 22;
+    y += 20;
 
     // --- 3. BLUE ASSOCIATION BANNER (Current style for other showrooms) ---
-    doc.rect(left, y, fullWidth, 20).fill(COLORS.primary);
-    doc.fillColor('white').fontSize(9.5).font('Helvetica-Bold')
+    doc.rect(left, y, fullWidth, 18).fill(COLORS.primary);
+    doc.fillColor('white').fontSize(8.5).font('Helvetica-Bold')
       .text('The Automotive Traders and Importers Association Karachi', left, y + 5, { align: 'center', width: fullWidth });
-    y += 25;
+    y += 22;
   }
 
   // --- 3. VEHICLE DATA SECTION (WITH UNDERLINES) ---
-  doc.fillColor('black').fontSize(8.5);
+  doc.fillColor('black').fontSize(7.5);
 
   const drawField = (label, value, x, currY, width, labelWidth, options = {}) => {
     const { underline = false, boldLabel = true, valueBold = false } = options;
@@ -410,19 +410,19 @@ async function drawReceiptLayout(doc, transaction, qrImage, options = {}) {
   // --- 3b. CPLC DETAILS ---
   if (transaction.cplcVerification && transaction.cplcVerification.trim() !== '') {
     y += drawSectionHeader(doc, 'CPLC Details', left, y, fullWidth);
-    y += 3; // Reduced gap after CPLC header
-    doc.fontSize(8.5).font('Helvetica');
+    y += 2; // Reduced gap after CPLC header
+    doc.fontSize(7.5).font('Helvetica');
     const hC1 = drawField('CPLC Counter No:', transaction.cplcVerification, left, y, 200, labelW);
     const hC2 = drawField('CPLC Date:', transaction.cplcDate ? fmt(transaction.cplcDate) : '', left + 215, y, 160, 70);
     const hC3 = drawField('Time:', transaction.cplcTime, left + 395, y, 120, 40);
-    y += Math.max(hC1, hC2, hC3) + 5; // Reduced gap after CPLC
+    y += Math.max(hC1, hC2, hC3) + 4; // Reduced gap after CPLC
   }
 
   // --- 4. FOR CAR DEALERS ---
   if (transaction.forCarDealers !== false) {
     y = checkPageBreak(doc, y, 250); // Dealer section is tall, check for break
     y += drawSectionHeader(doc, 'For Car Dealers', left, y, fullWidth);
-    y += 5; // Reduced gap after header
+    y += 4; // Reduced gap after header
 
     const ownerName = transaction.ownerName || s.name || s.ownerName;
     const ownerCnicVal = transaction.ownerCnic || s.cnic || s.nic;
@@ -430,36 +430,36 @@ async function drawReceiptLayout(doc, transaction, qrImage, options = {}) {
     const rightColX = left + 265;
     const dealerColWidth = (fullWidth - 15) / 2;
     const drawDealerRow = (label, val, x, cY, opts = {}) => {
-      return drawField(label, val, x, cY, dealerColWidth, 105, opts);
+      return drawField(label, val, x, cY, dealerColWidth, 95, opts);
     };
 
     // Row 2: Name (left) | Name (right)
     const hR2L = drawDealerRow('Name:', transaction.salesmanName || createdBy.name, left, y, { underline: true });
     const hR2R = drawDealerRow('Name:', transaction.purchaserSalesmanName || '', rightColX, y, { underline: true });
-    y += Math.max(hR2L, hR2R) + 4;
+    y += Math.max(hR2L, hR2R) + 3;
     // Row 3: Address (left) | Address (right)
     const hR3L = drawDealerRow('Address:', ownerAddressVal, left, y, { underline: true });
     const hR3R = drawDealerRow('Address:', transaction.purchaserAddress || '', rightColX, y, { underline: true });
-    y += Math.max(hR3L, hR3R) + 4;
+    y += Math.max(hR3L, hR3R) + 3;
     // Row 5: Phone (left) | Phone (right)
     const hR4L = drawDealerRow('Phone:', transaction.ownerTelephone || s.phone, left, y, { underline: true });
     const hR4R = drawDealerRow('Phone:', transaction.purchaserPhone || '', rightColX, y, { underline: true });
-    y += Math.max(hR4L, hR4R) + 4;
+    y += Math.max(hR4L, hR4R) + 3;
     // Row 6: CNIC (left) | CNIC (right)
     const hR5L = drawDealerRow('CNIC:', formatCnic(ownerCnicVal), left, y, { underline: true });
     const hR5R = drawDealerRow('CNIC:', formatCnic(transaction.purchaserCnic), rightColX, y, { underline: true });
-    y += Math.max(hR5L, hR5R) + 4;
+    y += Math.max(hR5L, hR5R) + 3;
     // Row 6.5: Father Name (left and right)
     if (transaction.ownerFatherName || transaction.purchaserFatherName) {
       const hR6L = transaction.ownerFatherName ? drawDealerRow('S/O:', transaction.ownerFatherName, left, y, { underline: true }) : 0;
       const hR6R = transaction.purchaserFatherName ? drawDealerRow('S/O:', transaction.purchaserFatherName, rightColX, y, { underline: true }) : 0;
-      y += Math.max(hR6L, hR6R) + 4;
+      y += Math.max(hR6L, hR6R) + 3;
     }
     // Row 7: Nadra Bio Date (only if values exist)
     if (transaction.sellerBiometricDate || transaction.purchaserBiometricDate) {
       const hB1 = drawDealerRow('Nadra Bio Date:', transaction.sellerBiometricDate ? fmt(transaction.sellerBiometricDate) : '_________________', left, y, { underline: true });
       const hB2 = drawDealerRow('Nadra Bio Date:', transaction.purchaserBiometricDate ? fmt(transaction.purchaserBiometricDate) : '_________________', rightColX, y, { underline: true });
-      y += Math.max(hB1, hB2) + 4;
+      y += Math.max(hB1, hB2) + 3;
     }
     // Row 8: Sign
     const hS1 = drawDealerRow('Sellers Sign:', '', left, y, { underline: true });
@@ -487,37 +487,37 @@ async function drawReceiptLayout(doc, transaction, qrImage, options = {}) {
     const sellerLabel = "Seller's Sign";
     const purchaserLabel = "Purchaser's Sign";
     const signLine = '_____________________';
-    const labelToLineGap = 8;
+    const labelToLineGap = 6;
 
-    doc.fontSize(10).font('Helvetica-Oblique').fillColor(COLORS.text);
+    doc.fontSize(9).font('Helvetica-Oblique').fillColor(COLORS.text);
     const sellerLabelW = doc.widthOfString(sellerLabel);
     const purchaserLabelW = doc.widthOfString(purchaserLabel);
 
     doc.text(sellerLabel, left, y);
-    doc.font('Helvetica').fontSize(9).fillColor(COLORS.textMuted).text(signLine, left + sellerLabelW + labelToLineGap + 5, y + 1);
-    doc.font('Helvetica-Oblique').fontSize(10).fillColor(COLORS.text).text(purchaserLabel, left + 285, y);
-    doc.font('Helvetica').fontSize(9).fillColor(COLORS.textMuted).text(signLine, left + 285 + purchaserLabelW + labelToLineGap + 5, y + 1);
-    y += 18; // Increased from 10 to prevent sticking
+    doc.font('Helvetica').fontSize(8).fillColor(COLORS.textMuted).text(signLine, left + sellerLabelW + labelToLineGap + 5, y + 1);
+    doc.font('Helvetica-Oblique').fontSize(9).fillColor(COLORS.text).text(purchaserLabel, left + 285, y);
+    doc.font('Helvetica').fontSize(8).fillColor(COLORS.textMuted).text(signLine, left + 285 + purchaserLabelW + labelToLineGap + 5, y + 1);
+    y += 16; // Reduced from 18
 
     const drawSignInfo = (x, currY, data, mode) => {
       let currentY = currY;
-      doc.fontSize(10); // Standard label size for signatures
+      doc.fontSize(8.5); // Standard label size for signatures
       const lW = 85;
       const blockWidth = 265;
       // Prioritize manually entered name (data.name) over salesman/agent name (data.salesman)
       // unless it's strictly a showroom-only signature where no name was entered.
       const combinedName = (mode === 'showroom' && !data.name) ? data.salesman : (data.name || data.salesman);
       const hN = drawField('Name:', `${combinedName}${data.fatherName ? ` S/O ${data.fatherName}` : ''}`, x, currentY, blockWidth, lW);
-      currentY += hN + 5;
+      currentY += hN + 4;
       const hA = drawField('Address:', data.address, x, currentY, blockWidth, lW);
-      currentY += hA + 5;
+      currentY += hA + 4;
       const hT = drawField('Tel:', data.tel, x, currentY, blockWidth, lW);
-      currentY += hT + 5;
+      currentY += hT + 4;
       const hC = drawField('CNIC:', formatCnic(data.nic), x, currentY, blockWidth, lW);
-      currentY += hC + 5;
+      currentY += hC + 4;
       if (data.nadraDate) {
         const hN = drawField('Nadra Bio Date:', data.nadraDate, x, currentY, blockWidth, lW);
-        currentY += hN + 5;
+        currentY += hN + 4;
       }
       return currentY - currY;
     };
@@ -556,13 +556,13 @@ async function drawReceiptLayout(doc, transaction, qrImage, options = {}) {
   const col1Width = 220; // Description
   const col2Width = 140; // Amount
   const col3Width = fullWidth - col1Width - col2Width; // Details (bank/cheque)
-  const rowHeight = 22;
+  const rowHeight = 20;
   const tableLeft = left;
   const amountLeft = tableLeft + col1Width;
   const detailsLeft = amountLeft + col2Width;
 
   // Header row
-  doc.fontSize(8.5).font('Helvetica-Bold').fillColor(COLORS.text);
+  doc.fontSize(7.5).font('Helvetica-Bold').fillColor(COLORS.text);
   doc.rect(tableLeft, y, col1Width, rowHeight).strokeColor(COLORS.border).stroke();
   doc.rect(amountLeft, y, col2Width, rowHeight).strokeColor(COLORS.border).stroke();
   doc.rect(detailsLeft, y, col3Width, rowHeight).strokeColor(COLORS.border).stroke();
@@ -572,7 +572,7 @@ async function drawReceiptLayout(doc, transaction, qrImage, options = {}) {
   y += rowHeight;
 
 
-  doc.fontSize(8.5);
+  doc.fontSize(7.5);
 
   // Payment breakdown rows
   if (paymentMethods.length > 0) {
@@ -619,13 +619,13 @@ async function drawReceiptLayout(doc, transaction, qrImage, options = {}) {
     y += rowHeight;
   }
   // Total Amount row
-  doc.fontSize(8.5).font('Helvetica-Bold').fillColor(COLORS.text);
+  doc.fontSize(7.5).font('Helvetica-Bold').fillColor(COLORS.text);
   doc.rect(tableLeft, y, col1Width, rowHeight).strokeColor(COLORS.border).stroke();
   doc.rect(amountLeft, y, col2Width, rowHeight).strokeColor(COLORS.border).stroke();
   doc.rect(detailsLeft, y, col3Width, rowHeight).strokeColor(COLORS.border).stroke();
   doc.text('Total Amount', tableLeft + 6, y + 6, { width: col1Width - 10 });
   doc.text(`PKR ${(transaction.amount || 0).toLocaleString()}`, amountLeft + 6, y + 6, { width: col2Width - 10 });
-  doc.font('Helvetica-Oblique').fontSize(8.5).fillColor(COLORS.text);
+  doc.font('Helvetica-Oblique').fontSize(7.5).fillColor(COLORS.text);
   doc.text(`${numberToWords(transaction.amount).toUpperCase()}`, detailsLeft + 6, y + 6, { width: col3Width - 10 });
 
   y += rowHeight;
@@ -693,11 +693,11 @@ From today onward, the showroom will have full rights over the vehicle as purcha
       signLabel = 'Seller’s Signature: __________';
     }
 
-    doc.font('Helvetica').fontSize(8).lineGap(0).fillColor(COLORS.text);
+    doc.font('Helvetica').fontSize(7).lineGap(0).fillColor(COLORS.text);
     doc.text(undertakingText, left + 5, y, { width: fullWidth - 10, align: 'justify' });
-    y += doc.heightOfString(undertakingText, { width: fullWidth - 10, align: 'justify' }) + 8;
+    y += doc.heightOfString(undertakingText, { width: fullWidth - 10, align: 'justify' }) + 6;
 
-    doc.font('Helvetica-Bold').fontSize(9).text(signLabel, left + 5, y);
+    doc.font('Helvetica-Bold').fontSize(8).text(signLabel, left + 5, y);
     y += 5;
   }
 
@@ -706,7 +706,7 @@ From today onward, the showroom will have full rights over the vehicle as purcha
   y += 3; // Reduced from 5
   y += drawSectionHeader(doc, 'Remarks', left, y, fullWidth);
   y += 3;
-  doc.font('Helvetica').fontSize(8).fillColor(COLORS.text).text((transaction.remarks || 'No additional remarks.').toUpperCase(), left + 5, y, { width: fullWidth - 10 });
+  doc.font('Helvetica').fontSize(7).fillColor(COLORS.text).text((transaction.remarks || 'No additional remarks.').toUpperCase(), left + 5, y, { width: fullWidth - 10 });
 
   y += 40;
   doc.fillColor('black');
@@ -737,7 +737,7 @@ From today onward, the showroom will have full rights over the vehicle as purcha
     const iconGap = 6;
     const sideMargin = 40; // Margin from page edges
 
-    doc.font('Helvetica-Bold').fontSize(10).fillColor('black'); // Increased from 8 to 10
+    doc.font('Helvetica-Bold').fontSize(9).fillColor('black'); // Increased from 8 to 10
 
     // Phone section - RIGHT ALIGNED
     const phoneText = `${owner}${owner ? ' : ' : ''}${phone}`;
@@ -783,11 +783,11 @@ From today onward, the showroom will have full rights over the vehicle as purcha
     const iconYSingle = socialY + 3.5 - iconSize / 2;
     const rightEdge = left + fullWidth;
 
-    doc.fontSize(7).font('Helvetica-Bold').fillColor('black');
-    doc.text(oneLine(fullAddress, 95), left, footerY, { width: fullWidth, align: 'center' });
+    doc.fontSize(6.5).font('Helvetica-Bold').fillColor('black');
+    doc.text(oneLine(fullAddress, 100), left, footerY, { width: fullWidth, align: 'center' });
     doc.text(oneLine(website, 50), left, footerY + 10, { width: fullWidth, align: 'center' });
 
-    doc.font('Helvetica').fontSize(7).fillColor('black');
+    doc.font('Helvetica').fontSize(6.5).fillColor('black');
     const drawPart = (part, x, iconY) => {
       let curX = x;
       if (part.icon && part.icon.length) {

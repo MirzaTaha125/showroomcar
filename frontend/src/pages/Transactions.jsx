@@ -220,18 +220,18 @@ export default function Transactions() {
                   return (
                     <tr key={t._id}>
                       <td>
-                        <strong>{t.receiptNumber || '—'}</strong>
+                        <strong>{(t.receiptNumber || '—').toUpperCase()}</strong>
                         <div className="table-muted">{t.transactionDate ? format(new Date(t.transactionDate), 'dd/MM/yyyy') : '—'}</div>
                       </td>
-                      <td>{numberPlate}</td>
-                      <td>{chassis}</td>
-                      <td>{engine}</td>
-                      <td>{make}</td>
-                      <td>{model}</td>
-                      <td>{purchaser}</td>
-                      <td>{seller}</td>
+                      <td>{numberPlate?.toUpperCase()}</td>
+                      <td>{chassis?.toUpperCase()}</td>
+                      <td>{engine?.toUpperCase()}</td>
+                      <td>{make?.toUpperCase()}</td>
+                      <td>{model?.toUpperCase()}</td>
+                      <td>{purchaser?.toUpperCase()}</td>
+                      <td>{seller?.toUpperCase()}</td>
                       <td>PKR {t.amount?.toLocaleString() ?? '0'}</td>
-                      <td>{t.createdBy?.name || '—'}</td>
+                      <td>{(t.createdBy?.name || '—').toUpperCase()}</td>
                       {!isController && (
 
                         <td>

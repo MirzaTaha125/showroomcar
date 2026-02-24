@@ -271,21 +271,21 @@ export default function TokenReceipts() {
                                     <tr key={item._id}>
                                         <td>{format(new Date(item.createdAt), 'dd/MM/yyyy')}</td>
                                         <td>
-                                            <strong>{item.make} {item.model}</strong>
-                                            <div className="table-muted">{item.onBehalfOfSellingCar}</div>
+                                            <strong>{item.make?.toUpperCase()} {item.model?.toUpperCase()}</strong>
+                                            <div className="table-muted">{item.onBehalfOfSellingCar?.toUpperCase()}</div>
                                         </td>
-                                        <td>{item.fromMrMrs}</td>
+                                        <td>{item.fromMrMrs?.toUpperCase()}</td>
                                         <td>PKR {item.amountReceived.toLocaleString()}</td>
-                                        <td>{item.purchaserName}</td>
-                                        <td>{item.createdBy?.name || item.addedBy?.name || '—'}</td>
+                                        <td>{item.purchaserName?.toUpperCase()}</td>
+                                        <td>{(item.createdBy?.name || item.addedBy?.name || '—').toUpperCase()}</td>
                                         {!isController && (
 
                                             <td>
                                                 <div className="table-actions">
-                                                    <button type="button" className="btn btn-primary btn-sm" onClick={() => openPdfPreview(item._id)}><Eye size={14} /> View</button>
-                                                    <button type="button" className="btn btn-secondary btn-sm" onClick={() => downloadPdf(item._id)} disabled={pdfLoading === item._id}>{pdfLoading === item._id ? '...' : <FileDown size={14} />} Download</button>
-                                                    <Link to={`/token-receipts/edit/${item._id}`} className="btn btn-secondary btn-sm"><Pencil size={14} /> Edit</Link>
-                                                    <button type="button" className="btn btn-danger btn-sm" onClick={() => onDeleteClick(item._id)}><Trash2 size={14} /></button>
+                                                    <button type="button" className="btn btn-primary btn-sm" onClick={() => openPdfPreview(item._id)} title="View PDF"><Eye size={14} /></button>
+                                                    <button type="button" className="btn btn-secondary btn-sm" onClick={() => downloadPdf(item._id)} disabled={pdfLoading === item._id} title="Download PDF">{pdfLoading === item._id ? '...' : <FileDown size={14} />}</button>
+                                                    <Link to={`/token-receipts/edit/${item._id}`} className="btn btn-secondary btn-sm" title="Edit"><Pencil size={14} /></Link>
+                                                    <button type="button" className="btn btn-danger btn-sm" onClick={() => onDeleteClick(item._id)} title="Delete"><Trash2 size={14} /></button>
                                                 </div>
                                             </td>
                                         )}

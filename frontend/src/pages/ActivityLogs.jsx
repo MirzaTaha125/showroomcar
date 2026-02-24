@@ -38,8 +38,8 @@ export default function ActivityLogs() {
   }, [filterUser, filterAction, filterShowroom, filterFrom, filterTo]);
 
   useEffect(() => {
-    api.get('/users').then((res) => setUsers(res.data)).catch(() => {});
-    api.get('/showrooms').then((res) => setShowrooms(res.data)).catch(() => {});
+    api.get('/users').then((res) => setUsers(res.data)).catch(() => { });
+    api.get('/showrooms').then((res) => setShowrooms(res.data)).catch(() => { });
   }, []);
 
   const onResetConfirm = async () => {
@@ -125,10 +125,10 @@ export default function ActivityLogs() {
                     <td>
                       {log.createdAt ? format(new Date(log.createdAt), 'PPp') : '—'}
                     </td>
-                    <td>{log.user?.name || '—'} ({log.user?.role || '—'})</td>
-                    <td><span className="badge badge-muted">{log.action || '—'}</span></td>
-                    <td>{log.entityType ? `${log.entityType}${log.entityId ? ` #${String(log.entityId).slice(-6)}` : ''}` : '—'}</td>
-                    <td>{log.showroom?.name || '—'}</td>
+                    <td>{(log.user?.name || '—').toUpperCase()} ({(log.user?.role || '—').toUpperCase()})</td>
+                    <td><span className="badge badge-muted">{log.action?.toUpperCase() || '—'}</span></td>
+                    <td>{log.entityType ? `${log.entityType?.toUpperCase()}${log.entityId ? ` #${String(log.entityId).slice(-6)}` : ''}` : '—'}</td>
+                    <td>{log.showroom?.name?.toUpperCase() || '—'}</td>
                   </tr>
                 ))
               )}

@@ -18,8 +18,10 @@ const tokenReceiptSchema = new mongoose.Schema(
 
         // Purchaser Details
         purchaserName: { type: String, required: true, trim: true },
+        purchaserFatherName: { type: String, trim: true },
         purchaserCnic: { type: String, trim: true },
         purchaserMobile: { type: String, trim: true },
+        purchaserAddress: { type: String, trim: true },
 
         // Seller Details
         sellerName: { type: String, required: true, trim: true },

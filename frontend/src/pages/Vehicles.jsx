@@ -175,11 +175,11 @@ export default function Vehicles() {
               ) : (
                 vehicles.map((v) => (
                   <tr key={v._id}>
-                    <td><code>{v.chassisNo}</code></td>
-                    <td>{v.make} {v.model}</td>
-                    <td>{v.color}</td>
-                    {isAdmin && <td>{v.showroom?.name || '—'}</td>}
-                    <td><span className={v.status === 'sold' ? 'badge badge-warning' : 'badge badge-success'}>{v.status}</span></td>
+                    <td><code>{v.chassisNo?.toUpperCase()}</code></td>
+                    <td>{v.make?.toUpperCase()} {v.model?.toUpperCase()}</td>
+                    <td>{v.color?.toUpperCase()}</td>
+                    {isAdmin && <td>{v.showroom?.name?.toUpperCase() || '—'}</td>}
+                    <td><span className={v.status === 'sold' ? 'badge badge-warning' : 'badge badge-success'}>{v.status?.toUpperCase()}</span></td>
                     {!isController && (
                       <td>
                         <div className="table-actions">

@@ -203,7 +203,7 @@ async function drawTokenReceiptLayout(doc, receipt, options = {}) {
 
     y = checkPageBreak(doc, y, 150);
     const colWidth = (fullWidth - 20) / 2;
-    const drawPersonBox = (title, name, cnic, mobile, x, currY) => {
+    const drawPersonBox = (title, name, cnic, mobile, address, x, currY) => {
         let sY = currY;
         sY += drawSectionHeader(doc, title, x, sY, colWidth);
         sY += 10;
@@ -212,18 +212,16 @@ async function drawTokenReceiptLayout(doc, receipt, options = {}) {
         sY += drawField(doc, 'CNIC:', formatCnic(cnic), x, sY, colWidth, 50, { underline: true });
         sY += 8;
         sY += drawField(doc, 'Mobile:', mobile, x, sY, colWidth, 50, { underline: true });
+        if (address) {
+            sY += 8;
+            sY += drawField(doc, 'Address:', address, x, sY, colWidth, 50, { underline: true });
+        }
         return sY - currY;
     };
 
-    const hP = drawPersonBox('Purchaser Details', receipt.purchaserName, receipt.purchaserCnic, receipt.purchaserMobile, left, y);
-    const hS = drawPersonBox('Seller Details', receipt.sellerName, receipt.sellerCnic, receipt.sellerMobile, left + colWidth + 20, y);
+    const hP = drawPersonBox('Purchaser Details', receipt.purchaserName + (receipt.purchaserFatherName ? ` S/O ${receipt.purchaserFatherName}` : ''), receipt.purchaserCnic, receipt.purchaserMobile, receipt.purchaserAddress, left, y);
+    const hS = drawPersonBox('Seller Details', receipt.sellerName + (receipt.sellerFatherName ? ` S/O ${receipt.sellerFatherName}` : ''), receipt.sellerCnic, receipt.sellerMobile, receipt.sellerAddress, left + colWidth + 20, y);
     y += Math.max(hP, hS) + 10;
-
-    if (receipt.sellerAddress) {
-        y = checkPageBreak(doc, y, 100);
-        const hAddr = drawField(doc, 'Seller Address:', receipt.sellerAddress, left, y, fullWidth, labelW, { underline: true });
-        y += hAddr + 10;
-    }
 
     y += 55;
 
