@@ -13,6 +13,23 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+/** Fetch a PDF blob, retrying once after 900ms on network/connection errors. */
+export async function fetchPdfBlob(url) {
+  const attempt = () => api.get(url, { responseType: 'blob' }).then((res) => {
+    const blob = res.data;
+    if (!blob.type || !blob.type.includes('pdf')) throw new Error('Server did not return a PDF. Please try again.');
+    return blob;
+  });
+  try {
+    return await attempt();
+  } catch (err) {
+    const retryable = !err.response || err.response.status >= 500 || err.code === 'ERR_NETWORK' || err.code === 'ECONNRESET' || err.code === 'ETIMEDOUT';
+    if (!retryable) throw err;
+    await new Promise((r) => setTimeout(r, 900));
+    return attempt();
+  }
+}
+
 /** User-friendly message when backend is unreachable or connection fails. */
 export function getNetworkErrorMessage(err) {
   const code = err?.code;

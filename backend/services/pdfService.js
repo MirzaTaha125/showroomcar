@@ -248,11 +248,13 @@ async function drawReceiptLayout(doc, transaction, qrImage, options = {}) {
   const fullWidth = 515;
   const centerX = left + fullWidth / 2;
 
+  const isPurchase = (transaction.documentTitle || '').toUpperCase().includes('PURCHASE');
+
   // --- 0. QR CODE (top left) ---
   const qrSize = 56;
   const qrY = 16;
   const qrX = left;
-  if (qrImage && qrImage.length) {
+  if (!isPurchase && qrImage && qrImage.length) {
     try {
       doc.image(qrImage, qrX, qrY, { width: qrSize });
       // Rotated text beside QR code (90 degrees)
@@ -355,8 +357,6 @@ async function drawReceiptLayout(doc, transaction, qrImage, options = {}) {
   // --- 3. VEHICLE DATA SECTION ---
   y += drawSectionHeader(doc, 'Vehicle Information', left, y, fullWidth);
   y += 10; // Increased gap after header for better readability
-
-  const isPurchase = (transaction.documentTitle || '').toUpperCase().includes('PURCHASE');
   const dateLabel = isPurchase ? 'Date of Purchasing:' : 'Date of Delivery:';
   const timeLabel = isPurchase ? 'Time of Purchasing:' : 'Time of Delivery:';
 

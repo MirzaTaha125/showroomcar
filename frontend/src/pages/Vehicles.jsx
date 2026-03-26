@@ -5,27 +5,20 @@ import { format } from 'date-fns';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import { formatCnic, formatPhone } from '../api/utils';
 import '../components/ui.css';
 import './Vehicles.css';
 
 const vehicleFields = [
+  { name: 'chassisNo', label: 'Chassis No', required: true },
+  { name: 'engineNo', label: 'Engine No', required: true },
   { name: 'registrationNo', label: 'Registration No', required: false },
-  { name: 'dateOfRegistration', label: 'Date of Registration', required: false, type: 'date' },
-  { name: 'chassisNo', label: 'Chassis No *', required: true },
-  { name: 'engineNo', label: 'Engine No *', required: true },
-  { name: 'make', label: 'Make *', required: true },
-  { name: 'model', label: 'Model *', required: true },
-  { name: 'color', label: 'Color *', required: true },
-  { name: 'hp', label: 'H/P', required: false },
-  { name: 'registrationBookNoNew', label: 'Reg. Book No. New', required: false },
-  { name: 'registrationBookNo', label: 'Reg. Book No', required: false },
-  { name: 'salesCertificateBillOfEntryNo', label: 'Sales Certificate / Bill of Entry No', required: false },
-  { name: 'salesCertificateDate', label: 'Sales Certificate Date', required: false, type: 'date' },
-  { name: 'invoiceNo', label: 'Invoice No', required: false },
-  { name: 'invoiceDate', label: 'Invoice Date', required: false, type: 'date' },
-  { name: 'cplcVerification', label: 'CPLC Counter No', required: false },
-  { name: 'cplcDate', label: 'CPLC Date', required: false, type: 'date' },
-  { name: 'cplcTime', label: 'CPLC Time', required: false },
+  { name: 'dateOfRegistration', label: 'Year of Registration', required: false, type: 'date' },
+  { name: 'make', label: 'Make', required: true },
+  { name: 'model', label: 'Model', required: true },
+  { name: 'yearOfManufacturing', label: 'Year of Manufacturing', required: false },
+  { name: 'color', label: 'Color', required: false },
+  { name: 'engineCapacity', label: 'Engine Capacity', required: false },
 ];
 
 export default function Vehicles() {
@@ -42,7 +35,10 @@ export default function Vehicles() {
   const [filterStatus, setFilterStatus] = useState('');
   const [confirmDelete, setConfirmDelete] = useState({ open: false, id: null });
 
-  const defaultValues = vehicleFields.reduce((acc, f) => ({ ...acc, [f.name]: '' }), { showroom: '', status: 'available' });
+  const defaultValues = vehicleFields.reduce((acc, f) => ({ ...acc, [f.name]: '' }), {
+    showroom: '', status: 'available',
+    ownerName: '', fatherName: '', ownerCnic: '', ownerPhone: '', ownerAddress: '',
+  });
   const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm({ defaultValues });
 
   const fetchVehicles = () => {
@@ -75,6 +71,11 @@ export default function Vehicles() {
     vehicleFields.forEach((f) => setValue(f.name, row[f.name] || ''));
     setValue('status', row.status || 'available');
     setValue('showroom', row.showroom?._id || '');
+    setValue('ownerName', row.ownerName || '');
+    setValue('fatherName', row.fatherName || '');
+    setValue('ownerCnic', row.ownerCnic || '');
+    setValue('ownerPhone', row.ownerPhone || '');
+    setValue('ownerAddress', row.ownerAddress || '');
     setModalOpen(true);
   };
 
@@ -216,22 +217,55 @@ export default function Vehicles() {
                 </div>
               )}
               <div className="form-row">
-                {vehicleFields.slice(0, 6).map((f) => (
+                {vehicleFields.map((f) => (
                   <div key={f.name} className="form-group">
-                    <label>{f.label}</label>
-                    <input {...register(f.name, { required: f.required && `${f.label.replace(' *', '')} is required` })} placeholder={f.label} />
+                    <label>{f.label}{f.required && ' *'}</label>
+                    <input
+                      type={f.type || 'text'}
+                      {...register(f.name, { required: f.required && `${f.label} is required` })}
+                      placeholder={f.type === 'date' ? '' : f.label}
+                    />
                     {errors[f.name] && <span className="form-error">{errors[f.name].message}</span>}
                   </div>
                 ))}
               </div>
+              <div className="form-section-title">Owner Details</div>
               <div className="form-row">
-                {vehicleFields.slice(6).map((f) => (
-                  <div key={f.name} className="form-group">
-                    <label>{f.label}</label>
-                    <input {...register(f.name)} placeholder={f.label} />
-                  </div>
-                ))}
+                <div className="form-group">
+                  <label>Owner Name *</label>
+                  <input {...register('ownerName', { required: 'Owner Name is required' })} placeholder="Owner Name" />
+                  {errors.ownerName && <span className="form-error">{errors.ownerName.message}</span>}
+                </div>
+                <div className="form-group">
+                  <label>S/O</label>
+                  <input {...register('fatherName')} placeholder="Father's Name" />
+                </div>
+                <div className="form-group">
+                  <label>Owner CNIC</label>
+                  <input
+                    {...register('ownerCnic', {
+                      onChange: (e) => { e.target.value = formatCnic(e.target.value); },
+                    })}
+                    placeholder="12345-1234567-1"
+                    maxLength={15}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Owner Phone</label>
+                  <input
+                    {...register('ownerPhone', {
+                      onChange: (e) => { e.target.value = formatPhone(e.target.value); },
+                    })}
+                    placeholder="0300-1234567"
+                    maxLength={12}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Owner Address</label>
+                  <input {...register('ownerAddress')} placeholder="Address" />
+                </div>
               </div>
+
               {editing && (
                 <div className="form-group">
                   <label>Status</label>

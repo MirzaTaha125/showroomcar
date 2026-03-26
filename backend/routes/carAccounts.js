@@ -590,6 +590,15 @@ router.put(
         await carAccount.transaction.save();
       }
 
+      await logActivity({
+        userId: req.user._id,
+        action: 'car_account_update',
+        entityType: 'car_account',
+        entityId: carAccount._id,
+        showroomId: carAccount.showroom?.toString?.() || carAccount.showroom,
+        metadata: { receiptNumber: carAccount.receiptNumber },
+      });
+
       const out = await CarAccount.findById(carAccount._id)
         .populate('showroom', 'name address phone ownerName logoPath')
         .populate('vehicle')
@@ -600,15 +609,6 @@ router.put(
       console.error('[CarAccount] Update failed:', err);
       res.status(500).json({ message: 'Failed to update deal. Please try again.' });
     }
-    await logActivity({
-      userId: req.user._id,
-      action: 'car_account_update',
-      entityType: 'car_account',
-      entityId: carAccount._id,
-      showroomId: carAccount.showroom?.toString?.() || carAccount.showroom,
-      metadata: { receiptNumber: carAccount.receiptNumber },
-    });
-    res.json(out);
   })
 );
 

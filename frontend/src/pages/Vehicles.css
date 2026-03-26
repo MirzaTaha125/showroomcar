@@ -42,3 +42,16 @@
   max-height: 70vh;
   overflow-y: auto;
 }
+
+.vehicles-form .form-section-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.4rem;
+  margin-top: 1rem;
+  margin-bottom: 0.75rem;
+  grid-column: 1 / -1;
+}

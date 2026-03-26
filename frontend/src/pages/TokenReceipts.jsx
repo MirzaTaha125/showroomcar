@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { FileText, Pencil, Trash2, FileDown, Eye, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { tokenReceiptService } from '../api/tokenReceiptService';
-import api, { getNetworkErrorMessage } from '../api/client';
+import api, { getNetworkErrorMessage, fetchPdfBlob } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import '../components/ui.css';
@@ -104,11 +104,7 @@ export default function TokenReceipts() {
         setPdfPreviewMeta(null);
         setError('');
         try {
-            const res = await api.get(`/pdf/token-receipt/${id}`, { responseType: 'blob' });
-            const blob = res.data;
-            if (!blob.type || !blob.type.includes('pdf')) {
-                throw new Error('Server did not return a PDF.');
-            }
+            const blob = await fetchPdfBlob(`/pdf/token-receipt/${id}`);
             setPdfPreviewUrl(URL.createObjectURL(blob));
             setPdfPreviewMeta({ id });
         } catch (e) {
@@ -126,8 +122,7 @@ export default function TokenReceipts() {
         setPdfLoading(id);
         setError('');
         try {
-            const res = await api.get(`/pdf/token-receipt/${id}`, { responseType: 'blob' });
-            const blob = res.data;
+            const blob = await fetchPdfBlob(`/pdf/token-receipt/${id}`);
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
             a.download = `token-receipt-${id}.pdf`;
@@ -259,7 +254,7 @@ export default function TokenReceipts() {
                                 <th>Amount</th>
                                 <th>Purchaser</th>
                                 <th>Created By</th>
-                                {!isController && <th>Actions</th>}
+                                <th>Actions</th>
                             </tr>
                         </thead>
 
@@ -278,17 +273,18 @@ export default function TokenReceipts() {
                                         <td>PKR {item.amountReceived.toLocaleString()}</td>
                                         <td>{item.purchaserName?.toUpperCase()}</td>
                                         <td>{(item.createdBy?.name || item.addedBy?.name || '—').toUpperCase()}</td>
-                                        {!isController && (
-
-                                            <td>
-                                                <div className="table-actions">
-                                                    <button type="button" className="btn btn-primary btn-sm" onClick={() => openPdfPreview(item._id)} title="View PDF"><Eye size={14} /></button>
-                                                    <button type="button" className="btn btn-secondary btn-sm" onClick={() => downloadPdf(item._id)} disabled={pdfLoading === item._id} title="Download PDF">{pdfLoading === item._id ? '...' : <FileDown size={14} />}</button>
-                                                    <Link to={`/token-receipts/edit/${item._id}`} className="btn btn-secondary btn-sm" title="Edit"><Pencil size={14} /></Link>
-                                                    <button type="button" className="btn btn-danger btn-sm" onClick={() => onDeleteClick(item._id)} title="Delete"><Trash2 size={14} /></button>
-                                                </div>
-                                            </td>
-                                        )}
+                                        <td>
+                                            <div className="table-actions">
+                                                <button type="button" className="btn btn-primary btn-sm" onClick={() => openPdfPreview(item._id)} title="View PDF"><Eye size={14} /></button>
+                                                <button type="button" className="btn btn-secondary btn-sm" onClick={() => downloadPdf(item._id)} disabled={pdfLoading === item._id} title="Download PDF">{pdfLoading === item._id ? '...' : <FileDown size={14} />}</button>
+                                                {!isController && (
+                                                    <>
+                                                        <Link to={`/token-receipts/edit/${item._id}`} className="btn btn-secondary btn-sm" title="Edit"><Pencil size={14} /></Link>
+                                                        <button type="button" className="btn btn-danger btn-sm" onClick={() => onDeleteClick(item._id)} title="Delete"><Trash2 size={14} /></button>
+                                                    </>
+                                                )}
+                                            </div>
+                                        </td>
                                     </tr>
 
                                 ))

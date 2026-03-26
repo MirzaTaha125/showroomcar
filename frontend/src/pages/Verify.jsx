@@ -52,7 +52,7 @@ export default function Verify() {
 
   const { receiptNumber, transactionDate, showroom, vehicle, ownerName } = data;
 
-  const logoUrl = getLogoUrl(showroom?.logoPath, api.defaults.baseURL);
+  const logoUrl = showroom?.logoData || getLogoUrl(showroom?.logoPath, api.defaults.baseURL);
 
 
   const isCarMarkaz = showroom?.name?.toLowerCase().replace(/\s/g, '').includes('carmarkaz');

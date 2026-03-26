@@ -19,8 +19,12 @@ export default defineConfig({
             if (proxyRes.socket) proxyRes.socket.setTimeout(60000);
           });
           proxy.on('error', (err, req, res) => {
-            const msg = err?.code === 'ECONNRESET' ? 'Backend connection reset (try again).' : err?.code === 'ECONNREFUSED' ? 'Backend not running.' : err?.message || 'Proxy error';
+            const msg = err?.code === 'ECONNRESET' ? 'Backend connection reset. Please try again.' : err?.code === 'ECONNREFUSED' ? 'Backend not running.' : err?.message || 'Proxy error';
             console.warn(`[vite proxy] ${req?.url || ''} – ${msg}`);
+            if (res && typeof res.writeHead === 'function' && !res.headersSent) {
+              res.writeHead(502, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ message: msg }));
+            }
           });
         },
       },

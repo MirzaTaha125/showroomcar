@@ -5,6 +5,7 @@ import { FileText, Plus, Trash2 } from 'lucide-react';
 import api from '../api/client';
 import { numberToWords, formatCnic, formatPhone } from '../api/utils';
 import { useAuth } from '../context/AuthContext';
+import { VehicleEditModal } from '../components/VehicleEditModal';
 import '../components/ui.css';
 import './CarAccount.css';
 
@@ -32,6 +33,7 @@ export default function CarAccount({ type, basePath }) {
   const [paymentRows, setPaymentRows] = useState([{ method: 'cash', amount: '', bankDetails: '', chequeNo: '', bankName: '', accountTitle: '', date: '' }]);
   const [loadedTransaction, setLoadedTransaction] = useState(null);
   const [editExpired, setEditExpired] = useState(false);
+  const [vehicleEditOpen, setVehicleEditOpen] = useState(false);
 
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm({
     defaultValues: {
@@ -362,7 +364,7 @@ export default function CarAccount({ type, basePath }) {
         navigate('/car-account');
       } catch (e) {
         console.error('[CarAccount] Update failed:', e.response?.data || e.message);
-        setError(e.response?.data?.message || e.response?.data?.errors?.[0]?.msg || 'Failed to save.');
+        setError(e.response?.data?.message || e.response?.data?.errors?.[0]?.msg || (e.code === 'ERR_NETWORK' ? 'Network error. Please try again.' : 'Failed to save.'));
       } finally {
         setSubmitting(false);
       }
@@ -494,7 +496,7 @@ export default function CarAccount({ type, basePath }) {
       navigate('/car-account');
     } catch (e) {
       console.error('[CarAccount] Create failed:', e.response?.data || e.message);
-      setError(e.response?.data?.message || e.response?.data?.errors?.[0]?.msg || 'Failed to create deal.');
+      setError(e.response?.data?.message || e.response?.data?.errors?.[0]?.msg || (e.code === 'ERR_NETWORK' ? 'Network error. Please try again.' : 'Failed to create deal.'));
     } finally {
       setSubmitting(false);
     }
@@ -628,21 +630,40 @@ export default function CarAccount({ type, basePath }) {
           {!addVehicleInForm && (
             <>
               <p className="car-account-dealers-desc">Select a vehicle from inventory. Only available vehicles are listed.</p>
-              <div className="form-group">
-                <label>Select from Inventory *</label>
-                <select
-                  {...register('vehicleId', { required: !addVehicleInForm && 'Select a vehicle or add vehicle in form' })}
-                  disabled={isEditMode}
-                >
-                  <option value="">— Select vehicle —</option>
-                  {inventory.map((v) => (
-                    <option key={v._id} value={v._id}>{v.make} {v.model} – {v.chassisNo}{v.registrationNo ? ` (${v.registrationNo})` : ''}</option>
-                  ))}
-                </select>
-                {isEditMode && <span className="form-hint">Vehicle selection cannot be changed after creation.</span>}
-                {!isEditMode && inventory.length === 0 && <span className="form-hint">No available vehicles. Add vehicles in Inventory or use &quot;Add vehicle in form&quot; above.</span>}
-                {errors.vehicleId && <span className="form-error">{errors.vehicleId.message}</span>}
-              </div>
+              {isEditMode && loadedTransaction?.vehicle ? (
+                <div className="form-group">
+                  <label>Selected Vehicle</label>
+                  <div className="vehicle-info-card">
+                    <div className="vehicle-info-details">
+                      <span className="vehicle-info-name">{loadedTransaction.vehicle.make} {loadedTransaction.vehicle.model}</span>
+                      <span className="vehicle-info-meta">Chassis: {loadedTransaction.vehicle.chassisNo}</span>
+                      {loadedTransaction.vehicle.registrationNo && <span className="vehicle-info-meta">Reg: {loadedTransaction.vehicle.registrationNo}</span>}
+                      {loadedTransaction.vehicle.color && <span className="vehicle-info-meta">Color: {loadedTransaction.vehicle.color}</span>}
+                    </div>
+                    <button type="button" className="btn btn-secondary btn-sm" onClick={() => setVehicleEditOpen(true)}>Edit Vehicle</button>
+                  </div>
+                </div>
+              ) : (
+                <div className="form-group">
+                  <label>Select from Inventory *</label>
+                  <select
+                    {...register('vehicleId', { required: !addVehicleInForm && 'Select a vehicle or add vehicle in form' })}
+                  >
+                    <option value="">— Select vehicle —</option>
+                    {inventory.map((v) => (
+                      <option key={v._id} value={v._id}>{v.make} {v.model} – {v.chassisNo}{v.registrationNo ? ` (${v.registrationNo})` : ''}</option>
+                    ))}
+                  </select>
+                  {!isEditMode && inventory.length === 0 && (
+                    <span className="form-hint">
+                      {isAdmin && !selectedShowroom
+                        ? 'Please select a showroom above to load available vehicles.'
+                        : 'No available vehicles. Add vehicles in Inventory or use "Add vehicle in form" above.'}
+                    </span>
+                  )}
+                  {errors.vehicleId && <span className="form-error">{errors.vehicleId.message}</span>}
+                </div>
+              )}
             </>
           )}
           {addVehicleInForm && (
@@ -1047,6 +1068,13 @@ export default function CarAccount({ type, basePath }) {
           </button>
         </div>
       </form>
+      {vehicleEditOpen && loadedTransaction?.vehicle && (
+        <VehicleEditModal
+          vehicle={loadedTransaction.vehicle}
+          onClose={() => setVehicleEditOpen(false)}
+          onSaved={(updated) => setLoadedTransaction((prev) => ({ ...prev, vehicle: updated }))}
+        />
+      )}
     </div >
   );
 }

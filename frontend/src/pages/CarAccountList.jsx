@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FileText, Pencil, Trash2, FileDown, Eye, X } from 'lucide-react';
 import { format } from 'date-fns';
-import api, { getNetworkErrorMessage } from '../api/client';
+import api, { getNetworkErrorMessage, fetchPdfBlob } from '../api/client';
 import { carAccountService } from '../api/carAccountService';
 import { useAuth } from '../context/AuthContext';
 import { ConfirmDialog } from '../components/ConfirmDialog';
@@ -116,16 +116,7 @@ export default function CarAccountList({ type, basePath }) {
     }
   };
 
-  const fetchPdfBlob = async (transactionId, type) => {
-    const res = await api.get(`/pdf/${type}/${transactionId}`, {
-      responseType: 'blob'
-    });
-    const blob = res.data;
-    if (!blob.type || !blob.type.includes('pdf')) {
-      throw new Error('Server did not return a PDF. Please sign in again and try again.');
-    }
-    return blob;
-  };
+  const fetchPdfBlobForType = (transactionId, type) => fetchPdfBlob(`/pdf/${type}/${transactionId}`);
 
   const openPdfPreview = async (transactionId, type) => {
     if (pdfPreviewUrl) URL.revokeObjectURL(pdfPreviewUrl);
@@ -134,7 +125,7 @@ export default function CarAccountList({ type, basePath }) {
     setPdfPreviewLoading(`${transactionId}-${type}`);
     setError('');
     try {
-      const blob = await fetchPdfBlob(transactionId, type);
+      const blob = await fetchPdfBlobForType(transactionId, type);
       setPdfPreviewUrl(URL.createObjectURL(blob));
       setPdfPreviewMeta({ transactionId, type });
     } catch (e) {
@@ -154,7 +145,7 @@ export default function CarAccountList({ type, basePath }) {
     setPdfLoading(`${transactionId}-${type}`);
     setError('');
     try {
-      const blob = await fetchPdfBlob(transactionId, type);
+      const blob = await fetchPdfBlobForType(transactionId, type);
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
       a.download = type === 'receipt' ? `receipt-${transactionId}.pdf` : `internal-${transactionId}.pdf`;
