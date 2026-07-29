@@ -7,6 +7,7 @@ import { generateReceiptTwoPagesPDF } from '../services/pdfService.js';
 import { generateTokenReceiptPDF } from '../services/tokenReceiptPdfService.js';
 import { logActivity } from '../utils/activityLog.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import { ownsDocument } from '../utils/ownerScope.js';
 
 const router = express.Router();
 const baseUrl = process.env.API_BASE_URL || 'http://localhost:5000/api';
@@ -22,11 +23,12 @@ async function assertTransactionAccess(req, transactionId) {
     .populate({ path: 'carAccount', populate: { path: 'vehicle' } })
     .populate('createdBy', 'name email address phone cnic');
   if (!transaction) return { error: 404, message: 'Transaction not found.' };
-  const showroomId = transaction.showroom?._id?.toString?.() || transaction.showroom?.toString?.();
-  if (req.user.role !== 'admin' && showroomId !== req.showroomId) {
+  const ca = transaction.carAccount;
+  // Controllers may only print their own documents. Accept ownership recorded on either half of
+  // the Transaction/CarAccount pair, since both are stamped with createdBy at creation time.
+  if (!ownsDocument(req, transaction) && !ownsDocument(req, ca)) {
     return { error: 403, message: 'Access denied.' };
   }
-  const ca = transaction.carAccount;
   let vehicle = ca?.vehicle ?? null;
   if (!vehicle && ca && (ca.make || ca.chassisNo)) {
     vehicle = {
@@ -153,7 +155,7 @@ router.get(
     if (!receipt) return res.status(404).json({ message: 'Token receipt not found.' });
 
     const showroomId = receipt.showroom?._id?.toString?.() || receipt.showroom?.toString?.();
-    if (req.user.role !== 'admin' && showroomId !== req.showroomId) {
+    if (!ownsDocument(req, receipt)) {
       return res.status(403).json({ message: 'Access denied.' });
     }
 

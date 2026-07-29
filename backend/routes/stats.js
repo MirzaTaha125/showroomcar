@@ -28,17 +28,21 @@ router.get(
       const showrooms = await Showroom.find(showroomFilter).lean();
       const showroomIds = showrooms.map((s) => s._id);
 
+      // Controllers see figures for their own work only; vehicle inventory stays showroom-wide.
+      const showroomScope = { showroom: { $in: showroomIds } };
+      const ownScope = isAdmin ? showroomScope : { ...showroomScope, createdBy: req.user._id };
+
       const [vehicleCount, availableCount, soldCount, transactionCount, saleCount, userCount, pdfCountResult] = await Promise.all([
-        Vehicle.countDocuments({ showroom: { $in: showroomIds } }),
-        Vehicle.countDocuments({ showroom: { $in: showroomIds }, status: 'available' }),
-        Vehicle.countDocuments({ showroom: { $in: showroomIds }, status: 'sold' }),
-        Transaction.countDocuments({ showroom: { $in: showroomIds } }),
-        Transaction.countDocuments({ showroom: { $in: showroomIds }, type: 'sale' }),
+        Vehicle.countDocuments(showroomScope),
+        Vehicle.countDocuments({ ...showroomScope, status: 'available' }),
+        Vehicle.countDocuments({ ...showroomScope, status: 'sold' }),
+        Transaction.countDocuments(ownScope),
+        Transaction.countDocuments({ ...ownScope, type: 'sale' }),
         isAdmin ? User.countDocuments({ role: 'user' }) : Promise.resolve(0),
-        Transaction.aggregate([{ $match: { showroom: { $in: showroomIds } } }, { $group: { _id: null, total: { $sum: '$pdfCount' } } }]).then((r) => (r[0]?.total ?? 0)),
+        Transaction.aggregate([{ $match: ownScope }, { $group: { _id: null, total: { $sum: '$pdfCount' } } }]).then((r) => (r[0]?.total ?? 0)),
       ]);
 
-      const recentTransactions = await Transaction.find({ showroom: { $in: showroomIds } })
+      const recentTransactions = await Transaction.find(ownScope)
         .sort({ transactionDate: -1, createdAt: -1 })
         .limit(10)
         .populate({ path: 'carAccount', select: 'purchaserName', populate: { path: 'vehicle', select: 'chassisNo make model' } })
@@ -46,7 +50,7 @@ router.get(
         .lean();
 
       const revenueResult = await Transaction.aggregate([
-        { $match: { showroom: { $in: showroomIds }, type: 'sale' } },
+        { $match: { ...ownScope, type: 'sale' } },
         { $addFields: { commissionAmountPkr: { $multiply: ['$amount', { $divide: [{ $ifNull: ['$commission', 0] }, 100] }] } } },
         { $group: { _id: null, totalRevenue: { $sum: '$amount' }, totalCommission: { $sum: '$commissionAmountPkr' } } },
       ]);
@@ -60,24 +64,24 @@ router.get(
 
       const [dailyCommission, weeklyCommission, monthlyCommission] = await Promise.all([
         Transaction.aggregate([
-          { $match: { showroom: { $in: showroomIds }, type: 'sale', transactionDate: { $gte: dayAgo } } },
+          { $match: { ...ownScope, type: 'sale', transactionDate: { $gte: dayAgo } } },
           { $addFields: { commissionAmountPkr: { $multiply: ['$amount', { $divide: [{ $ifNull: ['$commission', 0] }, 100] }] } } },
           { $group: { _id: null, sum: { $sum: '$commissionAmountPkr' } } },
         ]).then((r) => r[0]?.sum ?? 0),
         Transaction.aggregate([
-          { $match: { showroom: { $in: showroomIds }, type: 'sale', transactionDate: { $gte: weekAgo } } },
+          { $match: { ...ownScope, type: 'sale', transactionDate: { $gte: weekAgo } } },
           { $addFields: { commissionAmountPkr: { $multiply: ['$amount', { $divide: [{ $ifNull: ['$commission', 0] }, 100] }] } } },
           { $group: { _id: null, sum: { $sum: '$commissionAmountPkr' } } },
         ]).then((r) => r[0]?.sum ?? 0),
         Transaction.aggregate([
-          { $match: { showroom: { $in: showroomIds }, type: 'sale', transactionDate: { $gte: monthAgo } } },
+          { $match: { ...ownScope, type: 'sale', transactionDate: { $gte: monthAgo } } },
           { $addFields: { commissionAmountPkr: { $multiply: ['$amount', { $divide: [{ $ifNull: ['$commission', 0] }, 100] }] } } },
           { $group: { _id: null, sum: { $sum: '$commissionAmountPkr' } } },
         ]).then((r) => r[0]?.sum ?? 0),
       ]);
 
       const paymentDistributionRaw = await CarAccount.aggregate([
-        { $match: { showroom: { $in: showroomIds } } },
+        { $match: ownScope },
         { $unwind: { path: '$paymentMethods', preserveNullAndEmptyArrays: true } },
         { $group: { _id: { $ifNull: ['$paymentMethods.method', 'cash'] }, total: { $sum: { $ifNull: ['$paymentMethods.amount', 0] } } } },
       ]);

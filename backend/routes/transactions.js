@@ -4,6 +4,7 @@ import Transaction from '../models/Transaction.js';
 import { protect, restrictToShowroom } from '../middleware/auth.js';
 import { logActivity } from '../utils/activityLog.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import { scopeToOwner, ownsDocument } from '../utils/ownerScope.js';
 
 const router = express.Router();
 
@@ -27,6 +28,8 @@ router.get(
     } else {
       filter.showroom = req.showroomId;
     }
+    // Controllers only ever see transactions they created
+    scopeToOwner(req, filter);
     const transactions = await Transaction.find(filter)
       .populate('showroom', 'name address phone ownerName')
       .populate({ path: 'carAccount', populate: { path: 'vehicle', select: 'registrationNo chassisNo engineNo make model' } })
@@ -47,8 +50,7 @@ router.get(
       .populate({ path: 'carAccount', populate: { path: 'vehicle', select: 'registrationNo chassisNo engineNo make model' } })
       .populate('createdBy', 'name email');
     if (!transaction) return res.status(404).json({ message: 'Transaction not found.' });
-    const showroomId = transaction.showroom?._id?.toString?.() || transaction.showroom?.toString?.();
-    if (req.user.role !== 'admin' && showroomId !== req.showroomId) {
+    if (!ownsDocument(req, transaction)) {
       return res.status(403).json({ message: 'Access denied.' });
     }
     res.json(transaction);
@@ -124,8 +126,7 @@ router.put(
     if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
     const transaction = await Transaction.findById(req.params.id);
     if (!transaction) return res.status(404).json({ message: 'Transaction not found.' });
-    const showroomId = transaction.showroom?.toString?.();
-    if (req.user.role !== 'admin' && showroomId !== req.showroomId) {
+    if (!ownsDocument(req, transaction)) {
       return res.status(403).json({ message: 'Access denied.' });
     }
     const allowed = ['amount', 'commission', 'make', 'model', 'chassisNo', 'engineNo', 'transactionDate'];
@@ -150,8 +151,7 @@ router.delete(
     if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
     const transaction = await Transaction.findById(req.params.id).populate('carAccount');
     if (!transaction) return res.status(404).json({ message: 'Transaction not found.' });
-    const showroomId = transaction.showroom?.toString?.();
-    if (req.user.role !== 'admin' && showroomId !== req.showroomId) {
+    if (!ownsDocument(req, transaction)) {
       return res.status(403).json({ message: 'Access denied.' });
     }
     const carAccountId = transaction.carAccount?._id ?? transaction.carAccount;

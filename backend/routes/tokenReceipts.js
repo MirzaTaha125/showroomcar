@@ -5,6 +5,7 @@ import { protect, restrictToShowroom } from '../middleware/auth.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { logActivity } from '../utils/activityLog.js';
 import { generateExcel } from '../utils/excel.js';
+import { scopeToOwner, ownsDocument } from '../utils/ownerScope.js';
 
 const router = express.Router();
 
@@ -19,7 +20,7 @@ const getFilter = (req) => {
         filter.showroom = req.showroomId;
     }
 
-    if (req.query.createdBy) filter.createdBy = req.query.createdBy;
+    if (req.user.role === 'admin' && req.query.createdBy) filter.createdBy = req.query.createdBy;
 
     if (req.query.dateFrom || req.query.dateTo) {
         filter.createdAt = {};
@@ -30,7 +31,8 @@ const getFilter = (req) => {
             filter.createdAt.$lte = endOfDay;
         }
     }
-    return filter;
+    // Controllers only ever see their own receipts (applied last so it can't be overridden by query params)
+    return scopeToOwner(req, filter);
 };
 
 router.get(
@@ -154,8 +156,7 @@ router.get(
 
         if (!receipt) return res.status(404).json({ message: 'Token receipt not found.' });
 
-        const receiptShowroomId = receipt.showroom?._id?.toString?.() || receipt.showroom?.toString?.();
-        if (req.user.role !== 'admin' && receiptShowroomId !== req.showroomId) {
+        if (!ownsDocument(req, receipt)) {
             return res.status(403).json({ message: 'Access denied.' });
         }
 
@@ -235,7 +236,7 @@ router.put(
         if (!receipt) return res.status(404).json({ message: 'Token receipt not found.' });
 
         const showroomId = receipt.showroom?.toString?.();
-        if (req.user.role !== 'admin' && showroomId !== req.showroomId) {
+        if (!ownsDocument(req, receipt)) {
             return res.status(403).json({ message: 'Access denied.' });
         }
 
@@ -269,7 +270,7 @@ router.delete(
         if (!receipt) return res.status(404).json({ message: 'Token receipt not found.' });
 
         const showroomId = receipt.showroom?.toString?.();
-        if (req.user.role !== 'admin' && showroomId !== req.showroomId) {
+        if (!ownsDocument(req, receipt)) {
             return res.status(403).json({ message: 'Access denied.' });
         }
 

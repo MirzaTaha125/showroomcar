@@ -1,4 +1,6 @@
 import express from 'express';
+import fs from 'fs';
+import path from 'path';
 import Transaction from '../models/Transaction.js';
 
 const router = express.Router();
@@ -38,12 +40,27 @@ async function getVerification(req, res) {
         hp: ca.hp || '',
       };
     }
+    let logoData = null;
+    const logoPath = transaction.showroom?.logoPath;
+    if (logoPath) {
+      try {
+        // logoPath is like /api/uploads/logos/filename.jpg — strip /api prefix to get file path
+        const relativePath = logoPath.replace(/^\/api\//, '');
+        const filePath = path.join(process.cwd(), relativePath);
+        const fileBuffer = fs.readFileSync(filePath);
+        const ext = path.extname(filePath).slice(1).toLowerCase().replace('jpg', 'jpeg');
+        logoData = `data:image/${ext};base64,${fileBuffer.toString('base64')}`;
+      } catch {
+        // file missing or unreadable — skip logo
+      }
+    }
     const showroom = transaction.showroom
       ? {
         name: transaction.showroom.name,
         address: transaction.showroom.address,
         phone: transaction.showroom.phone,
         logoPath: transaction.showroom.logoPath,
+        logoData,
         socialLinks: transaction.showroom.socialLinks,
         ownerName: transaction.showroom.ownerName
       }

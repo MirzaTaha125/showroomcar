@@ -4,6 +4,7 @@ import AgentCommission from '../models/AgentCommission.js';
 import { protect, restrictToShowroom } from '../middleware/auth.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { generateExcel } from '../utils/excel.js';
+import { scopeToOwner } from '../utils/ownerScope.js';
 
 const router = express.Router();
 
@@ -18,7 +19,7 @@ const getFilter = (req) => {
         filter.showroom = req.showroomId;
     }
 
-    if (req.query.userId) filter.user = req.query.userId;
+    if (req.user.role === 'admin' && req.query.userId) filter.user = req.query.userId;
     if (req.query.status) filter.status = req.query.status;
 
     if (req.query.dateFrom || req.query.dateTo) {
@@ -30,7 +31,8 @@ const getFilter = (req) => {
             filter.date.$lte = endOfDay;
         }
     }
-    return filter;
+    // Controllers only ever see their own commissions (the earner is stored on `user`, not `createdBy`)
+    return scopeToOwner(req, filter, 'user');
 };
 
 router.get(

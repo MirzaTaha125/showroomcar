@@ -57,14 +57,21 @@ const vehicleFields = [
   body('engineNo').trim().notEmpty().withMessage('Engine number is required'),
   body('make').trim().notEmpty().withMessage('Make is required'),
   body('model').trim().notEmpty().withMessage('Model is required'),
-  body('color').trim().notEmpty().withMessage('Color is required'),
+  body('color').optional().trim(),
   body('hp').optional().trim(),
   body('yearOfManufacturing').optional().trim(),
-  body('yearOfManufacturing').optional().trim(),
+  body('engineCapacity').optional().trim(),
+  body('registrationNo').optional().trim(),
+  body('dateOfRegistration').optional({ values: 'falsy' }).isISO8601().withMessage('Invalid date'),
   body('registrationBookNo').optional().trim(),
   body('salesCertificate').optional().trim(),
   body('invoiceNo').optional().trim(),
   body('cplcVerification').optional().trim(),
+  body('ownerName').optional().trim(),
+  body('fatherName').optional().trim(),
+  body('ownerCnic').optional().trim(),
+  body('ownerPhone').optional().trim(),
+  body('ownerAddress').optional().trim(),
   body('showroom').optional().isMongoId(),
 ];
 
@@ -106,9 +113,10 @@ router.post(
 // Fields that can be updated on a vehicle (must match Vehicle schema + frontend form)
 const vehicleUpdateFields = [
   'chassisNo', 'engineNo', 'make', 'model', 'color', 'hp', 'yearOfManufacturing',
-  'registrationNo', 'dateOfRegistration', 'registrationBookNoNew', 'registrationBookNo',
+  'engineCapacity', 'registrationNo', 'dateOfRegistration', 'registrationBookNoNew', 'registrationBookNo',
   'salesCertificate', 'salesCertificateBillOfEntryNo', 'salesCertificateDate',
   'invoiceNo', 'invoiceDate', 'cplcVerification', 'cplcDate', 'cplcTime',
+  'ownerName', 'fatherName', 'ownerCnic', 'ownerPhone', 'ownerAddress',
   'status',
 ];
 
@@ -134,6 +142,12 @@ router.put(
     body('cplcVerification').optional().trim(),
     body('cplcDate').optional().isISO8601().withMessage('Invalid date').optional({ values: 'falsy' }),
     body('cplcTime').optional().trim(),
+    body('engineCapacity').optional().trim(),
+    body('ownerName').optional().trim(),
+    body('fatherName').optional().trim(),
+    body('ownerCnic').optional().trim(),
+    body('ownerPhone').optional().trim(),
+    body('ownerAddress').optional().trim(),
     body('status').optional().isIn(['available', 'sold']),
   ],
   asyncHandler(async (req, res) => {

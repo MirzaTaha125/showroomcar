@@ -7,6 +7,7 @@ import { protect, restrictToShowroom } from '../middleware/auth.js';
 import { logActivity } from '../utils/activityLog.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { generateExcel } from '../utils/excel.js';
+import { scopeToOwner, ownsDocument } from '../utils/ownerScope.js';
 import AgentCommission from '../models/AgentCommission.js';
 
 const router = express.Router();
@@ -33,7 +34,7 @@ const getFilter = (req) => {
   if (req.query.documentTitle) {
     filter.documentTitle = req.query.documentTitle;
   }
-  if (req.query.createdBy) filter.createdBy = req.query.createdBy;
+  if (req.user.role === 'admin' && req.query.createdBy) filter.createdBy = req.query.createdBy;
 
   if (req.query.dateFrom || req.query.dateTo) {
     filter.createdAt = {};
@@ -44,7 +45,8 @@ const getFilter = (req) => {
       filter.createdAt.$lte = endOfDay;
     }
   }
-  return filter;
+  // Controllers only ever see their own orders (applied last so it can't be overridden by query params)
+  return scopeToOwner(req, filter);
 };
 
 /** List car accounts (CarAccount model; each has transaction + vehicle) */
@@ -177,8 +179,7 @@ router.get(
       .populate('createdBy', 'name email')
       .lean();
     if (!doc) return res.status(404).json({ message: 'Car account not found.' });
-    const docShowroomId = doc.showroom?._id?.toString?.() || doc.showroom?.toString?.();
-    if (req.user.role !== 'admin' && docShowroomId !== req.showroomId) {
+    if (!ownsDocument(req, doc)) {
       return res.status(403).json({ message: 'Access denied.' });
     }
     res.json(doc);
@@ -533,7 +534,7 @@ router.put(
     if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
     const carAccount = await CarAccount.findById(req.params.id).populate('transaction').populate('vehicle');
     if (!carAccount) return res.status(404).json({ message: 'Car account not found.' });
-    if (req.user.role !== 'admin' && carAccount.showroom.toString() !== req.showroomId) {
+    if (!ownsDocument(req, carAccount)) {
       return res.status(403).json({ message: 'Access denied.' });
     }
     try {
@@ -590,6 +591,15 @@ router.put(
         await carAccount.transaction.save();
       }
 
+      await logActivity({
+        userId: req.user._id,
+        action: 'car_account_update',
+        entityType: 'car_account',
+        entityId: carAccount._id,
+        showroomId: carAccount.showroom?.toString?.() || carAccount.showroom,
+        metadata: { receiptNumber: carAccount.receiptNumber },
+      });
+
       const out = await CarAccount.findById(carAccount._id)
         .populate('showroom', 'name address phone ownerName logoPath')
         .populate('vehicle')
@@ -600,15 +610,6 @@ router.put(
       console.error('[CarAccount] Update failed:', err);
       res.status(500).json({ message: 'Failed to update deal. Please try again.' });
     }
-    await logActivity({
-      userId: req.user._id,
-      action: 'car_account_update',
-      entityType: 'car_account',
-      entityId: carAccount._id,
-      showroomId: carAccount.showroom?.toString?.() || carAccount.showroom,
-      metadata: { receiptNumber: carAccount.receiptNumber },
-    });
-    res.json(out);
   })
 );
 
@@ -622,7 +623,7 @@ router.delete(
     const carAccount = await CarAccount.findById(req.params.id).populate('vehicle').populate('transaction');
     if (!carAccount) return res.status(404).json({ message: 'Car account not found.' });
     const docShowroomId = carAccount.showroom?.toString?.();
-    if (req.user.role !== 'admin' && docShowroomId !== req.showroomId) {
+    if (!ownsDocument(req, carAccount)) {
       return res.status(403).json({ message: 'Access denied.' });
     }
     if (req.user.role !== 'admin') {

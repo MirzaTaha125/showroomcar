@@ -50,6 +50,7 @@ app.set('trust proxy', 1);
 app.use(helmet({
   contentSecurityPolicy: false, // Disable for API
   crossOriginEmbedderPolicy: false,
+  crossOriginResourcePolicy: { policy: 'cross-origin' }, // Allow images/assets from api subdomain on frontend domain
 }));
 
 // CORS - support multiple origins from env variable

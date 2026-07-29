@@ -3,6 +3,7 @@ import { body, param, validationResult } from 'express-validator';
 import User from '../models/User.js';
 import { protect, adminOnly } from '../middleware/auth.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import { normalizeUsername, isValidUsername, USERNAME_RULE } from '../utils/loginIdentifier.js';
 
 const router = express.Router();
 
@@ -27,6 +28,10 @@ router.put(
   [
     param('id').isMongoId(),
     body('name').optional().trim().notEmpty(),
+    body('username').optional().trim(),
+    // normalizeEmail must match POST /auth/register, or the same mailbox could be stored in two
+    // different forms and slip past the unique index.
+    body('email').optional().isEmail().normalizeEmail().withMessage('Valid email required'),
     body('role').optional().isIn(['admin', 'user']),
     body('showroom').optional().isMongoId(),
     body('isActive').optional().isBoolean(),
@@ -38,9 +43,29 @@ router.put(
   asyncHandler(async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
-    const { name, role, showroom, isActive, password, address, phone, cnic } = req.body;
+    const { name, email, role, showroom, isActive, password, address, phone, cnic } = req.body;
     const user = await User.findById(req.params.id).select('+password');
     if (!user) return res.status(404).json({ message: 'User not found.' });
+    if (email !== undefined && email !== user.email) {
+      const taken = await User.findOne({ email, _id: { $ne: user._id } }).select('_id');
+      if (taken) return res.status(400).json({ message: 'Email already registered.' });
+      user.email = email;
+    }
+    if (req.body.username !== undefined) {
+      const username = normalizeUsername(req.body.username);
+      if (username === undefined) {
+        // Blank clears the handle. Unset rather than store '', which the sparse unique index
+        // would treat as a real value and collide across every user without a username.
+        user.username = undefined;
+      } else {
+        if (!isValidUsername(username)) {
+          return res.status(400).json({ message: USERNAME_RULE });
+        }
+        const taken = await User.findOne({ username, _id: { $ne: user._id } }).select('_id');
+        if (taken) return res.status(400).json({ message: 'Username already taken.' });
+        user.username = username;
+      }
+    }
     if (name !== undefined) user.name = name;
     if (role !== undefined) {
       user.role = role;
@@ -52,7 +77,15 @@ router.put(
     if (address !== undefined) user.address = address;
     if (phone !== undefined) user.phone = phone;
     if (cnic !== undefined) user.cnic = cnic;
-    await user.save();
+    try {
+      await user.save();
+    } catch (err) {
+      if (err.code === 11000) {
+        const field = Object.keys(err.keyPattern || {})[0];
+        return res.status(400).json({ message: field === 'email' ? 'Email already registered.' : 'Username already taken.' });
+      }
+      throw err;
+    }
     const u = await User.findById(user._id).select('-password').populate('showroom');
     res.json(u);
   })
